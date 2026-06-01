@@ -15,29 +15,26 @@
 
     <!-- 主内容区 -->
     <div class="content pt-16 px-4 pb-6">
-      <!-- 直接的叶子菜单列表（按优先级排序） -->
-      <div v-if="sortedItems.length" class="direct-items bg-white rounded-xl shadow-sm mb-3 overflow-hidden">
-        <LeafMenuItem
-          v-for="item in sortedItems"
-          :key="item.id"
-          :item="item"
-          @click="handleChildClick"
-        />
-      </div>
-
-      <!-- 菜单组列表（按优先级排序） -->
-      <div class="menu-groups">
+      <!-- 统一排序的菜单列表 -->
+      <template v-for="item in unifiedItems" :key="item.data.id">
+        <!-- 直接叶子菜单 -->
+        <div v-if="item.type === 'leaf'" class="direct-item bg-white rounded-xl shadow-sm mb-3 overflow-hidden">
+          <LeafMenuItem
+            :item="item.data"
+            @click="handleChildClick"
+          />
+        </div>
+        <!-- 二级菜单组 -->
         <MenuGroup
-          v-for="group in sortedGroups"
-          :key="group.id"
-          :group="group"
+          v-else
+          :group="item.data"
           @toggle="handleToggleGroup"
           @child-click="handleChildClick"
         />
-      </div>
+      </template>
 
       <!-- 空状态 -->
-      <div v-if="!sortedItems.length && !sortedGroups.length" class="empty-state bg-white rounded-xl p-8 text-center">
+      <div v-if="!unifiedItems.length" class="empty-state bg-white rounded-xl p-8 text-center">
         <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-200 flex items-center justify-center">
           <span class="text-2xl">📦</span>
         </div>
@@ -73,7 +70,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { menuData, getSortedItems, getSortedGroups, type LeafMenu } from '@/data/menuData'
+import { menuData, getUnifiedSortedItems, type LeafMenu } from '@/data/menuData'
 import BottomTab from '@/components/BottomTab.vue'
 import MenuGroup from '@/components/MenuGroup.vue'
 import LeafMenuItem from '@/components/LeafMenuItem.vue'
@@ -90,13 +87,10 @@ const currentCategory = computed(() => {
   return menuData.find(cat => cat.id === appStore.activeCategory)
 })
 
-// 排序后的直接叶子菜单
-const sortedItems = computed(() => getSortedItems(currentCategory.value?.items))
-
-// 排序后的二级菜单组
-const sortedGroups = computed(() => {
-  if (!currentCategory.value?.groups) return []
-  return getSortedGroups(currentCategory.value.groups)
+// 统一排序后的菜单项
+const unifiedItems = computed(() => {
+  if (!currentCategory.value) return []
+  return getUnifiedSortedItems(currentCategory.value)
 })
 
 // 切换二级组折叠状态
@@ -118,11 +112,6 @@ const closeModal = () => {
 </script>
 
 <style scoped>
-.menu-groups {
-  display: flex;
-  flex-direction: column;
-}
-
 /* 弹窗样式 */
 .modal-overlay {
   animation: fadeIn 0.2s;

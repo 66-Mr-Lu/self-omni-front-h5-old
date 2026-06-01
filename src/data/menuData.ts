@@ -29,6 +29,15 @@ export interface TopCategory {
   priority?: number            // 优先级，数值越小优先级越高，默认 100
 }
 
+// 统一菜单项类型（用于同级别排序）
+export type UnifiedMenuItem = {
+  type: 'leaf'
+  data: LeafMenu
+} | {
+  type: 'group'
+  data: MenuGroup
+}
+
 // 完整的菜单数据
 export const menuData: TopCategory[] = [
   {
@@ -48,7 +57,7 @@ export const menuData: TopCategory[] = [
         name: '实时系统信息',
         icon: '📊',
         collapsed: true,
-        priority: 10,
+        priority: 15,
         children: [
           { id: 'cpu', name: 'CPU状态', icon: '💻', action: 'cpuMonitor', priority: 10 },
           { id: 'memory', name: '内存使用率', icon: '🧠', action: 'memoryMonitor', priority: 20 },
@@ -126,4 +135,24 @@ export const getSortedGroups = (groups: MenuGroup[]): MenuGroup[] => {
 // 获取排序后的组内子菜单
 export const getSortedChildren = (children: LeafMenu[]): LeafMenu[] => {
   return [...children].sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100))
+}
+
+// 获取统一排序后的菜单项（合并 items 和 groups）
+export const getUnifiedSortedItems = (category: TopCategory): UnifiedMenuItem[] => {
+  const result: UnifiedMenuItem[] = []
+
+  // 添加直接叶子菜单
+  if (category.items) {
+    for (const item of category.items) {
+      result.push({ type: 'leaf', data: item })
+    }
+  }
+
+  // 添加二级菜单组
+  for (const group of category.groups) {
+    result.push({ type: 'group', data: group })
+  }
+
+  // 按 priority 排序
+  return result.sort((a, b) => (a.data.priority ?? 100) - (b.data.priority ?? 100))
 }
