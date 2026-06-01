@@ -8,6 +8,12 @@ export const useAppStore = defineStore('app', () => {
   // 欢迎语
   const greeting = ref('')
 
+  // 当前激活的顶级分类ID
+  const activeCategory = ref('ops')
+
+  // 各二级组的折叠状态
+  const collapsedGroups = ref<Record<string, boolean>>({})
+
   // 更新时间问候语
   const updateGreeting = () => {
     const hour = new Date().getHours()
@@ -28,12 +34,34 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  // 设置当前激活的分类
+  const setActiveCategory = (id: string) => {
+    activeCategory.value = id
+    // 切换分类时重置折叠状态
+    resetCollapsed()
+  }
+
+  // 切换二级组折叠状态
+  const toggleGroup = (groupId: string) => {
+    collapsedGroups.value[groupId] = !collapsedGroups.value[groupId]
+  }
+
+  // 重置所有组为折叠状态
+  const resetCollapsed = () => {
+    collapsedGroups.value = {}
+  }
+
   // 初始化
   updateGreeting()
 
   return {
     appName,
     greeting,
-    updateGreeting
+    activeCategory,
+    collapsedGroups,
+    updateGreeting,
+    setActiveCategory,
+    toggleGroup,
+    resetCollapsed
   }
 })

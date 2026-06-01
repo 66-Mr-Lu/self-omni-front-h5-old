@@ -1,82 +1,69 @@
 <template>
-  <div class="home-page min-h-screen bg-gradient-to-br from-primary to-info">
-    <!-- 欢迎区域 -->
-    <div class="welcome-section px-5 pt-12 pb-8">
-      <div class="flex items-center justify-between">
+  <div class="home-page min-h-screen bg-gray-100 pb-20">
+    <!-- 顶部导航栏 -->
+    <div class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
+      <div class="flex items-center justify-between px-5 h-12">
         <div>
-          <p class="text-white text-opacity-80 text-sm mb-1">{{ currentDate }}</p>
-          <h1 class="text-white text-2xl font-semibold">
-            {{ appStore.greeting }}👋
-          </h1>
-          <p class="text-white text-opacity-60 text-sm mt-1">{{ appStore.appName }}</p>
+          <h1 class="text-white text-lg font-semibold">{{ appStore.appName }}</h1>
+          <p class="text-white text-opacity-80 text-xs">{{ appStore.greeting }}👋</p>
         </div>
-        <div class="w-12 h-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-          <span class="text-white text-xl">🚀</span>
+        <div class="w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+          <span class="text-white">⚙️</span>
         </div>
       </div>
     </div>
 
-    <!-- 仪表盘内容区域 -->
-    <div class="dashboard-content bg-white rounded-t-3xl min-h-screen px-5 py-6">
-      <!-- 统计卡片 -->
-      <div class="stats-grid grid grid-cols-3 gap-3 mb-6 -mt-10">
-        <div class="stat-card bg-white rounded-xl shadow-lg p-4 text-center">
-          <div class="text-primary text-xl font-bold">0</div>
-          <div class="text-gray-500 text-xs mt-1">工具总数</div>
-        </div>
-        <div class="stat-card bg-white rounded-xl shadow-lg p-4 text-center">
-          <div class="text-secondary text-xl font-bold">0</div>
-          <div class="text-gray-500 text-xs mt-1">使用次数</div>
-        </div>
-        <div class="stat-card bg-white rounded-xl shadow-lg p-4 text-center">
-          <div class="text-warning text-xl font-bold">0</div>
-          <div class="text-gray-500 text-xs mt-1">收藏夹</div>
-        </div>
+    <!-- 主内容区 -->
+    <div class="content pt-16 px-4 pb-6">
+      <!-- 直接的叶子菜单列表（按优先级排序） -->
+      <div v-if="sortedItems.length" class="direct-items bg-white rounded-xl shadow-sm mb-3 overflow-hidden">
+        <LeafMenuItem
+          v-for="item in sortedItems"
+          :key="item.id"
+          :item="item"
+          @click="handleChildClick"
+        />
       </div>
 
-      <!-- 快捷入口 -->
-      <div class="quick-access mb-6">
-        <h2 class="text-gray-800 font-semibold text-base mb-3">快捷入口</h2>
-        <div class="grid grid-cols-4 gap-3">
-          <div
-            v-for="(item, index) in quickAccessItems"
-            :key="index"
-            class="quick-item flex flex-col items-center p-3 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors"
-          >
-            <div class="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center mb-2">
-              <span class="text-lg">{{ item.icon }}</span>
-            </div>
-            <span class="text-gray-600 text-xs">{{ item.name }}</span>
-          </div>
-        </div>
+      <!-- 菜单组列表（按优先级排序） -->
+      <div class="menu-groups">
+        <MenuGroup
+          v-for="group in sortedGroups"
+          :key="group.id"
+          :group="group"
+          @toggle="handleToggleGroup"
+          @child-click="handleChildClick"
+        />
       </div>
 
-      <!-- 最近使用 -->
-      <div class="recent-section mb-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-gray-800 font-semibold text-base">最近使用</h2>
-          <span class="text-gray-400 text-xs">暂无记录</span>
+      <!-- 空状态 -->
+      <div v-if="!sortedItems.length && !sortedGroups.length" class="empty-state bg-white rounded-xl p-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-200 flex items-center justify-center">
+          <span class="text-2xl">📦</span>
         </div>
-        <div class="empty-state bg-gray-50 rounded-xl p-8 text-center">
-          <div class="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-200 flex items-center justify-center">
-            <span class="text-2xl">📦</span>
-          </div>
-          <p class="text-gray-400 text-sm">开始添加您的第一个工具吧</p>
-        </div>
+        <p class="text-gray-400 text-sm">暂无内容</p>
       </div>
+    </div>
 
-      <!-- 公告区域 -->
-      <div class="notice-section">
-        <div class="bg-gradient-to-r from-primary to-info rounded-xl p-4 text-white">
-          <div class="flex items-center">
-            <div class="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-3">
-              <span>📢</span>
-            </div>
-            <div>
-              <p class="text-sm font-medium">欢迎使用 Omni 工具箱</p>
-              <p class="text-xs text-white text-opacity-80 mt-0.5">个人工具集合，随心所欲</p>
-            </div>
+    <!-- 底部 Tab 导航 -->
+    <BottomTab v-model="appStore.activeCategory" />
+
+    <!-- 功能操作弹窗 -->
+    <div v-if="showModal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4" @click.self="closeModal">
+      <div class="modal-content bg-white rounded-2xl w-full max-w-sm p-6">
+        <div class="modal-header text-center mb-4">
+          <div class="w-12 h-12 mx-auto rounded-full bg-primary bg-opacity-10 flex items-center justify-center mb-3">
+            <span class="text-2xl">{{ selectedItem?.icon }}</span>
           </div>
+          <h3 class="text-gray-800 font-semibold">{{ selectedItem?.name }}</h3>
+        </div>
+        <div class="modal-body mb-6">
+          <p class="text-gray-500 text-sm text-center">此功能即将上线...</p>
+        </div>
+        <div class="modal-footer">
+          <button class="w-full bg-primary text-white py-3 rounded-xl font-medium" @click="closeModal">
+            确定
+          </button>
         </div>
       </div>
     </div>
@@ -84,47 +71,84 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { menuData, getSortedItems, getSortedGroups, type LeafMenu } from '@/data/menuData'
+import BottomTab from '@/components/BottomTab.vue'
+import MenuGroup from '@/components/MenuGroup.vue'
+import LeafMenuItem from '@/components/LeafMenuItem.vue'
 
+// 状态管理
 const appStore = useAppStore()
 
-// 当前日期
-const currentDate = computed(() => {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth() + 1
-  const day = now.getDate()
-  const weekDay = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()]
-  return `${year}年${month}月${day}日 ${weekDay}`
+// 弹窗状态
+const showModal = ref(false)
+const selectedItem = ref<LeafMenu | null>(null)
+
+// 当前选中的分类
+const currentCategory = computed(() => {
+  return menuData.find(cat => cat.id === appStore.activeCategory)
 })
 
-// 快捷入口数据
-const quickAccessItems = [
-  { name: '常用工具', icon: '🛠️' },
-  { name: '收藏夹', icon: '⭐' },
-  { name: '历史记录', icon: '📜' },
-  { name: '设置', icon: '⚙️' }
-]
+// 排序后的直接叶子菜单
+const sortedItems = computed(() => getSortedItems(currentCategory.value?.items))
+
+// 排序后的二级菜单组
+const sortedGroups = computed(() => {
+  if (!currentCategory.value?.groups) return []
+  return getSortedGroups(currentCategory.value.groups)
+})
+
+// 切换二级组折叠状态
+const handleToggleGroup = (groupId: string) => {
+  appStore.toggleGroup(groupId)
+}
+
+// 叶子菜单点击
+const handleChildClick = (item: LeafMenu) => {
+  selectedItem.value = item
+  showModal.value = true
+}
+
+// 关闭弹窗
+const closeModal = () => {
+  showModal.value = false
+  selectedItem.value = null
+}
 </script>
 
 <style scoped>
-.home-page {
-  min-height: 100vh;
-  min-height: 100dvh;
+.menu-groups {
+  display: flex;
+  flex-direction: column;
 }
 
-.dashboard-content {
-  margin-top: -1.5rem;
-  position: relative;
-  z-index: 1;
+/* 弹窗样式 */
+.modal-overlay {
+  animation: fadeIn 0.2s;
 }
 
-.stat-card {
-  transform: translateY(-0.5rem);
+.modal-content {
+  animation: slideUp 0.2s;
 }
 
-.quick-item {
-  cursor: pointer;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 </style>
