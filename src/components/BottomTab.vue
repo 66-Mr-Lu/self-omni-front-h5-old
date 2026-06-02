@@ -3,11 +3,11 @@
   <div class="bottom-tab fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50">
     <div class="flex justify-around items-center h-14">
       <div
-        v-for="(item, index) in tabs"
+        v-for="item in tabs"
         :key="item.id"
         class="tab-item flex flex-col items-center justify-center cursor-pointer py-1 px-3"
-        :class="{ 'active': activeId === item.id }"
-        @click="handleTabClick(item.id)"
+        :class="{ 'active': isActive(item.routePath) }"
+        @click="handleTabClick(item.routePath)"
       >
         <span class="text-xl">{{ item.icon }}</span>
         <span class="text-xs mt-0.5">{{ item.name }}</span>
@@ -20,34 +20,28 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { getSortedCategories, type TopCategory } from '@/data/menuData'
+import { useRouter, useRoute } from 'vue-router'
+import { getSortedCategories } from '@/data/menuData'
 
-// Props
-interface Props {
-  modelValue: string
-}
-
-const props = defineProps<Props>()
-
-// Emits
-interface Emits {
-  (e: 'update:modelValue', value: string): void
-}
-
-const emit = defineEmits<Emits>()
+// 路由
+const router = useRouter()
+const route = useRoute()
 
 // 底部安全区域高度
 const safeAreaBottom = ref(0)
 
 // 计算 Tab 数据（按优先级排序）
-const tabs = computed<TopCategory[]>(() => getSortedCategories())
+const tabs = computed(() => getSortedCategories())
 
-// 当前激活的 Tab ID
-const activeId = computed(() => props.modelValue)
+// 判断当前路由是否匹配
+const isActive = (routePath: string): boolean => {
+  const fullPath = `/${routePath}`
+  return route.path === fullPath || route.path.startsWith(fullPath + '/')
+}
 
 // Tab 点击事件
-const handleTabClick = (id: string) => {
-  emit('update:modelValue', id)
+const handleTabClick = (routePath: string) => {
+  router.push(`/${routePath}`)
 }
 
 // 初始化时获取安全区域高度

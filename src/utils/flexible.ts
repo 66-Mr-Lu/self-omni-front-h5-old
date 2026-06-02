@@ -13,8 +13,10 @@ const defaultConfig: FlexibleConfig = {
   maxFontSize: 16
 }
 
-function setRootFontSize(config: FlexibleConfig = defaultConfig) {
-  const { designWidth, minFontSize, maxFontSize } = config
+function setRootFontSize(config?: FlexibleConfig | Event) {
+  // 如果是事件对象，使用默认配置
+  const finalConfig = (config instanceof Event) ? defaultConfig : (config || defaultConfig)
+  const { designWidth, minFontSize, maxFontSize } = finalConfig
 
   // 获取屏幕宽度
   const screenWidth = window.innerWidth

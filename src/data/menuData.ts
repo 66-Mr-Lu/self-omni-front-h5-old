@@ -6,6 +6,7 @@ export interface LeafMenu {
   action: string
   badge?: number
   priority?: number            // 优先级，数值越小优先级越高，默认 100
+  routePath?: string           // 路由路径（可选）
 }
 
 // 二级菜单组类型
@@ -27,6 +28,7 @@ export interface TopCategory {
   items?: LeafMenu[]           // 直接的叶子菜单
   groups: MenuGroup[]          // 二级菜单组
   priority?: number            // 优先级，数值越小优先级越高，默认 100
+  routePath: string            // 路由路径
 }
 
 // 统一菜单项类型（用于同级别排序）
@@ -44,11 +46,12 @@ export const menuData: TopCategory[] = [
     id: 'ops',
     name: '运维',
     icon: '🔌',
+    routePath: 'ops',
     priority: 10,              // 运维优先级最高
     // 直接的叶子菜单
     items: [
-      { id: 'shutdown', name: '关机', icon: '🔴', action: 'shutdown', priority: 10 },
-      { id: 'remote-power', name: '远程开机', icon: '🟢', action: 'remotePower', priority: 20 }
+      { id: 'shutdown', name: '关机', icon: '🔴', action: 'shutdown', priority: 10, routePath: '/ops/shutdown' },
+      { id: 'remote-power', name: '远程开机', icon: '🟢', action: 'remotePower', priority: 20, routePath: '/ops/remote-power' }
     ],
     // 二级菜单组
     groups: [
@@ -57,12 +60,12 @@ export const menuData: TopCategory[] = [
         name: '实时系统信息',
         icon: '📊',
         collapsed: true,
-        priority: 15,
+        priority: 30,
         children: [
-          { id: 'cpu', name: 'CPU状态', icon: '💻', action: 'cpuMonitor', priority: 10 },
-          { id: 'memory', name: '内存使用率', icon: '🧠', action: 'memoryMonitor', priority: 20 },
-          { id: 'disk', name: '硬盘健康度', icon: '💾', action: 'diskMonitor', priority: 30 },
-          { id: 'network', name: 'IP信息', icon: '🌐', action: 'networkInfo', priority: 40 }
+          { id: 'cpu', name: 'CPU状态', icon: '💻', action: 'cpuMonitor', priority: 10, routePath: '/ops/monitor/cpu' },
+          { id: 'memory', name: '内存使用率', icon: '🧠', action: 'memoryMonitor', priority: 20, routePath: '/ops/monitor/memory' },
+          { id: 'disk', name: '硬盘健康度', icon: '💾', action: 'diskMonitor', priority: 30, routePath: '/ops/monitor/disk' },
+          { id: 'network', name: 'IP信息', icon: '🌐', action: 'networkInfo', priority: 40, routePath: '/ops/monitor/network' }
         ]
       }
     ]
@@ -71,10 +74,11 @@ export const menuData: TopCategory[] = [
     id: 'tools',
     name: '工具',
     icon: '🛠️',
+    routePath: 'tools',
     priority: 20,              // 工具优先级次之
     // 直接的叶子菜单
     items: [
-      { id: 'json-convert', name: 'JSONstring转json', icon: '📝', action: 'jsonConvert', priority: 10 }
+      { id: 'json-convert', name: 'JSONstring转json', icon: '📝', action: 'jsonConvert', priority: 10, routePath: '/tools/json-convert' }
     ],
     // 二级菜单组
     groups: [
@@ -85,8 +89,8 @@ export const menuData: TopCategory[] = [
         collapsed: true,
         priority: 10,
         children: [
-          { id: 'rsa-keygen', name: 'RSA密钥对生成器', icon: '🔑', action: 'rsaKeygen', priority: 10 },
-          { id: 'encrypt-decrypt', name: '加密/解密文本', icon: '🔒', action: 'encryptDecrypt', priority: 20 }
+          { id: 'rsa-keygen', name: 'RSA密钥对生成器', icon: '🔑', action: 'rsaKeygen', priority: 10, routePath: '/tools/encrypt/rsa-keygen' },
+          { id: 'encrypt-decrypt', name: '加密/解密文本', icon: '🔒', action: 'encryptDecrypt', priority: 20, routePath: '/tools/encrypt/encrypt-decrypt' }
         ]
       }
     ]
@@ -95,11 +99,12 @@ export const menuData: TopCategory[] = [
     id: 'download',
     name: '下载',
     icon: '⬇️',
+    routePath: 'download',
     priority: 30,              // 下载优先级第三
     // 直接的叶子菜单（没有二级菜单组）
     items: [
-      { id: 'bilibili-download', name: 'bilibili视频下载', icon: '📺', action: 'bilibiliDownload', priority: 10 },
-      { id: 'douyin-download', name: '抖音视频下载', icon: '📱', action: 'douyinDownload', priority: 20 }
+      { id: 'bilibili-download', name: 'bilibili视频下载', icon: '📺', action: 'bilibiliDownload', priority: 10, routePath: '/download/bilibili' },
+      { id: 'douyin-download', name: '抖音视频下载', icon: '📱', action: 'douyinDownload', priority: 20, routePath: '/download/douyin' }
     ],
     groups: []
   },
@@ -107,10 +112,11 @@ export const menuData: TopCategory[] = [
     id: 'control',
     name: '控制',
     icon: '🌡️',
+    routePath: 'control',
     priority: 40,              // 控制优先级最低
     // 直接的叶子菜单（没有二级菜单组）
     items: [
-      { id: 'air-conditioner', name: '空调控制', icon: '❄️', action: 'airConditioner', priority: 10 }
+      { id: 'air-conditioner', name: '空调控制', icon: '❄️', action: 'airConditioner', priority: 10, routePath: '/control/air-conditioner' }
     ],
     groups: []
   }
@@ -155,4 +161,16 @@ export const getUnifiedSortedItems = (category: TopCategory): UnifiedMenuItem[] 
 
   // 按 priority 排序
   return result.sort((a, b) => (a.data.priority ?? 100) - (b.data.priority ?? 100))
+}
+
+// 根据分类ID获取路由路径
+export const getCategoryRoutePath = (categoryId: string): string => {
+  const category = menuData.find(cat => cat.id === categoryId)
+  return category?.routePath || '/ops'
+}
+
+// 根据路由路径获取分类ID
+export const getCategoryIdByRoute = (routePath: string): string => {
+  const category = menuData.find(cat => routePath.startsWith(cat.routePath))
+  return category?.id || 'ops'
 }
