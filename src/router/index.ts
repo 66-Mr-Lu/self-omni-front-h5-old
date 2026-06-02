@@ -10,6 +10,7 @@ const ControlPage = () => import('@/views/control/index.vue')
 // 功能详情页面（懒加载）
 const FeaturePage = () => import('@/views/feature/index.vue')
 const JsonEscapeConvertPage = () => import('@/views/tools/json-escape-convert.vue')
+const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
 // 静态路由
 const routes: RouteRecordRaw[] = [
@@ -76,6 +77,12 @@ const routes: RouteRecordRaw[] = [
         name: 'JsonEscapeConvert',
         component: JsonEscapeConvertPage,
         meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'download/bilibili',
+        name: 'BilibiliDownload',
+        component: BilibiliDownloadPage,
+        meta: { categoryId: 'download', requiresAuth: false }
       }
     ]
   }

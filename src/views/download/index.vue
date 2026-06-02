@@ -22,11 +22,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { showDialog } from 'vant'
 import { useAppStore } from '@/stores/app'
 import { menuData, getUnifiedSortedItems, type LeafMenu } from '@/data/menuData'
 import MenuGroup from '@/components/MenuGroup.vue'
 import LeafMenuItem from '@/components/LeafMenuItem.vue'
+
+// 路由
+const router = useRouter()
 
 // 状态管理
 const appStore = useAppStore()
@@ -49,12 +53,23 @@ const handleToggleGroup = (groupId: string) => {
 
 // 叶子菜单点击
 const handleChildClick = (item: LeafMenu) => {
-  // 使用 Vant showDialog 函数弹出提示
-  showDialog({
-    title: '提示',
-    message: `${item.name}功能即将上线...`,
-    confirmButtonText: '知道了'
-  })
+  // 根据菜单项ID跳转到对应页面
+  if (item.id === 'bilibili-download') {
+    router.push('/download/bilibili')
+  } else if (item.id === 'douyin-download') {
+    // 抖音下载功能暂未实现，显示提示
+    showDialog({
+      title: '提示',
+      message: '抖音视频下载功能即将上线...',
+      confirmButtonText: '知道了'
+    })
+  } else {
+    showDialog({
+      title: '提示',
+      message: `${item.name}功能即将上线...`,
+      confirmButtonText: '知道了'
+    })
+  }
 }
 </script>
 
