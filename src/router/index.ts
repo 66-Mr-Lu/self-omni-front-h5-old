@@ -45,12 +45,30 @@ const routes: RouteRecordRaw[] = [
         component: ControlPage,
         meta: { categoryId: 'control' }
       },
-      // 功能详情页路由
+      // 功能详情页路由（包含分类路径）
       {
-        path: 'feature/:action',
-        name: 'Feature',
+        path: 'ops/:action',
+        name: 'OpsFeature',
         component: FeaturePage,
-        meta: { requiresAuth: false }
+        meta: { categoryId: 'ops', requiresAuth: false }
+      },
+      {
+        path: 'tools/:action',
+        name: 'ToolsFeature',
+        component: FeaturePage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'download/:action',
+        name: 'DownloadFeature',
+        component: FeaturePage,
+        meta: { categoryId: 'download', requiresAuth: false }
+      },
+      {
+        path: 'control/:action',
+        name: 'ControlFeature',
+        component: FeaturePage,
+        meta: { categoryId: 'control', requiresAuth: false }
       }
     ]
   }

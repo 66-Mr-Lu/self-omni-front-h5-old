@@ -36,7 +36,7 @@ const tabs = computed(() => getSortedCategories())
 // 判断当前路由是否匹配
 const isActive = (routePath: string): boolean => {
   const fullPath = `/${routePath}`
-  return route.path === fullPath || route.path.startsWith(fullPath + '/')
+  return route.path === fullPath || route.path.startsWith(`${fullPath}/`)
 }
 
 // Tab 点击事件
