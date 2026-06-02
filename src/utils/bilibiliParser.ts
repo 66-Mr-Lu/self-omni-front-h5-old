@@ -33,20 +33,21 @@ export async function parseBilibiliUrl(input: string): Promise<string> {
     return `https://www.bilibili.com/video/${bvId}`
   }
 
-  // 3. 检查是否为短链接
-  const shortUrlMatch = trimmedInput.match(SHORT_URL_PATTERN)
-  if (shortUrlMatch) {
-    // 短链接需要通过 HTTP 请求获取真实链接
-    try {
-      const fullUrl = await resolveShortUrl(trimmedInput)
-      return fullUrl
-    } catch (error) {
-      throw new Error('短链接解析失败，请检查链接是否正确')
-    }
-  }
-
-  // 4. 格式无效
-  throw new Error('请输入有效的Bilibili视频链接')
+  // 3. 检查是否为短链）
+  return trimmedInput   // 短链接直接返回（短链服务器没有配置跨域，浏览器会拦截）
+  // const shortUrlMatch = trimmedInput.match(SHORT_URL_PATTERN)
+  // if (shortUrlMatch) {
+  //   // 短链接需要通过 HTTP 请求获取真实链接
+  //   try {
+  //     const fullUrl = await resolveShortUrl(trimmedInput)
+  //     return fullUrl
+  //   } catch (error) {
+  //     throw new Error('短链接解析失败，请检查链接是否正确')
+  //   }
+  // }
+  //
+  // // 4. 格式无效
+  // throw new Error('请输入有效的Bilibili视频链接')
 }
 
 /**
