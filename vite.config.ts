@@ -11,6 +11,15 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // 代理配置
+    proxy: {
+      '/api': {
+        target: 'http://guai01bin.dynv6.net:8081',
+        changeOrigin: true,
+        ws: true,
+        // rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   }
 })
