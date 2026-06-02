@@ -78,7 +78,7 @@ export const menuData: TopCategory[] = [
     priority: 20,              // 工具优先级次之
     // 直接的叶子菜单
     items: [
-      // { id: 'json-convert', name: 'JSONstring转json', icon: '📝', action: 'jsonConvert', priority: 10, routePath: '/tools/json-convert' }
+      { id: 'json-escape-convert', name: 'JSON转义转换', icon: '📝', action: 'jsonEscapeConvert', priority: 10, routePath: '/tools/json-escape-convert' }
     ],
     // 二级菜单组
     groups: [

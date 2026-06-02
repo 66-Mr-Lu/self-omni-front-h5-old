@@ -23,10 +23,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { showDialog } from 'vant'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { menuData, getUnifiedSortedItems, type LeafMenu } from '@/data/menuData'
 import MenuGroup from '@/components/MenuGroup.vue'
 import LeafMenuItem from '@/components/LeafMenuItem.vue'
+
+// 路由
+const router = useRouter()
 
 // 状态管理
 const appStore = useAppStore()
@@ -49,6 +53,12 @@ const handleToggleGroup = (groupId: string) => {
 
 // 叶子菜单点击
 const handleChildClick = (item: LeafMenu) => {
+  // JSON转义转换功能跳转到对应的页面
+  if (item.action === 'jsonEscapeConvert' && item.routePath) {
+    router.push(item.routePath)
+    return
+  }
+  
   // 使用 Vant showDialog 函数弹出提示
   showDialog({
     title: '提示',

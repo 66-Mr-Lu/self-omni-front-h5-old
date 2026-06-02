@@ -1,14 +1,15 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import Home from '@/views/Home.vue'
+import Home from '@/views/home/index.vue'
 
 // 导入功能页面（懒加载）
-const OpsPage = () => import('@/views/OpsPage.vue')
-const ToolsPage = () => import('@/views/ToolsPage.vue')
-const DownloadPage = () => import('@/views/DownloadPage.vue')
-const ControlPage = () => import('@/views/ControlPage.vue')
+const OpsPage = () => import('@/views/ops/index.vue')
+const ToolsPage = () => import('@/views/tools/index.vue')
+const DownloadPage = () => import('@/views/download/index.vue')
+const ControlPage = () => import('@/views/control/index.vue')
 
 // 功能详情页面（懒加载）
-const FeaturePage = () => import('@/views/FeaturePage.vue')
+const FeaturePage = () => import('@/views/feature/index.vue')
+const JsonEscapeConvertPage = () => import('@/views/tools/json-escape-convert.vue')
 
 // 静态路由
 const routes: RouteRecordRaw[] = [
@@ -69,6 +70,12 @@ const routes: RouteRecordRaw[] = [
         name: 'ControlFeature',
         component: FeaturePage,
         meta: { categoryId: 'control', requiresAuth: false }
+      },
+      {
+        path: 'tools/json-escape-convert',
+        name: 'JsonEscapeConvert',
+        component: JsonEscapeConvertPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
       }
     ]
   }
