@@ -2,11 +2,18 @@
  * Axios 配置文件
  */
 
-import axios from 'axios'
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'
+
+// 基础响应类型
+export interface BaseResponse<T = any> {
+  code: number
+  message: string
+  data?: T
+}
 
 // 创建axios实例
-const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081',
+const instance: AxiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://guai01bin.hopto.org:32280/omni/api/v1',
   timeout: 30000, // 30秒超时
   headers: {
     'Content-Type': 'application/json'
@@ -24,7 +31,7 @@ instance.interceptors.request.use(
   }
 )
 
-// 响应拦截器
+// 响应拦截器（不标注返回类型，让TS推断）
 instance.interceptors.response.use(
   (response) => {
     // 统一处理响应数据
@@ -35,14 +42,11 @@ instance.interceptors.response.use(
     console.error('HTTP请求错误:', error)
     
     if (error.response) {
-      // 请求已发出，服务器响应状态码不在2xx范围
       console.error('状态码:', error.response.status)
       console.error('响应数据:', error.response.data)
     } else if (error.request) {
-      // 请求已发出但没有收到响应
       console.error('请求超时或无响应')
     } else {
-      // 其他错误
       console.error('请求配置错误:', error.message)
     }
     
@@ -50,4 +54,25 @@ instance.interceptors.response.use(
   }
 )
 
-export default instance
+/**
+ * 封装请求方法，确保返回正确的类型
+ */
+const request = {
+  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<BaseResponse<T>> {
+    return instance.get(url, config) as Promise<BaseResponse<T>>
+  },
+  
+  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<BaseResponse<T>> {
+    return instance.post(url, data, config) as Promise<BaseResponse<T>>
+  },
+  
+  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<BaseResponse<T>> {
+    return instance.put(url, data, config) as Promise<BaseResponse<T>>
+  },
+  
+  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<BaseResponse<T>> {
+    return instance.delete(url, config) as Promise<BaseResponse<T>>
+  }
+}
+
+export default request

@@ -86,35 +86,6 @@ export async function parseBilibiliUrl(input: string): Promise<string> {
 }
 
 /**
- * 解析短链接，获取真实链接（备用方法，通过后台接口处理）
- * @param shortUrl 短链接
- * @returns 完整的视频链接
- */
-async function resolveShortUrl(shortUrl: string): Promise<string> {
-  try {
-    const response = await fetch(shortUrl, {
-      method: 'GET',
-      redirect: 'follow'
-    })
-
-    if (!response.ok) {
-      throw new Error('短链接请求失败')
-    }
-
-    const finalUrl = response.url
-    const match = finalUrl.match(FULL_URL_MATCH)
-    if (!match) {
-      throw new Error('短链接解析结果无效')
-    }
-
-    const bvId = match[2]
-    return `https://www.bilibili.com/video/${bvId}`
-  } catch (error) {
-    throw new Error('短链接解析失败')
-  }
-}
-
-/**
  * 验证 Bilibili 链接格式是否有效
  * @param input 用户输入的链接
  * @returns 是否有效

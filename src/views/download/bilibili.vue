@@ -96,7 +96,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { processUrl, extractFirstUrl, isValidBilibiliUrl } from '@/utils/bilibiliParser'
+import { processUrl, extractFirstUrl } from '@/utils/bilibiliParser'
 import { addToDownloadQueue, type AddToQueueData } from '@/api/download'
 
 // 路由

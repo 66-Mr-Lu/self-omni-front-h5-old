@@ -2,7 +2,7 @@
  * 下载相关 API 接口
  */
 
-import axios from '@/utils/axios'
+import request from '@/utils/axios'
 
 // 加入队列响应数据
 export interface AddToQueueData {
@@ -10,13 +10,6 @@ export interface AddToQueueData {
   position: number
   estimatedTime?: string
   videoTitle?: string
-}
-
-// 加入队列响应
-export interface AddToQueueResponse {
-  code: number
-  message: string
-  data?: AddToQueueData
 }
 
 // 下载队列任务状态
@@ -33,26 +26,6 @@ export interface QueueTask {
   errorMessage?: string
 }
 
-// 查询队列状态响应
-export interface QueueStatusResponse {
-  code: number
-  message: string
-  data?: QueueTask
-}
-
-// 获取队列列表响应
-export interface QueueListResponse {
-  code: number
-  message: string
-  data?: QueueTask[]
-}
-
-// API 错误响应
-export interface ApiErrorResponse {
-  code: number
-  message: string
-}
-
 /**
  * 加入下载队列
  * @param url 完整的视频链接
@@ -60,13 +33,12 @@ export interface ApiErrorResponse {
  */
 export async function addToDownloadQueue(url: string): Promise<AddToQueueData> {
   try {
-      // const response = await axios.get('/api/v1/bilibili/save-media-info', {
-      const response = await axios.get('/bilibili/save-media-info', {
-          params: {
-              videoUrl: url
-          }
-      })
-    
+    const response = await request.get<AddToQueueData>('/bilibili/save-media-info', {
+      params: {
+        videoUrl: url
+      }
+    })
+
     if (response.code === 200 && response.data) {
       return response.data
     } else {
@@ -87,10 +59,10 @@ export async function addToDownloadQueue(url: string): Promise<AddToQueueData> {
  */
 export async function getQueueTaskStatus(taskId: string): Promise<QueueTask> {
   try {
-    const response = await axios.get('/api/download/bilibili/queue/status', {
+    const response = await request.get<QueueTask>('/download/bilibili/queue/status', {
       params: { taskId }
     })
-    
+
     if (response.code === 200 && response.data) {
       return response.data
     } else {
@@ -110,8 +82,8 @@ export async function getQueueTaskStatus(taskId: string): Promise<QueueTask> {
  */
 export async function getQueueList(): Promise<QueueTask[]> {
   try {
-    const response = await axios.get('/api/download/bilibili/queue/list')
-    
+    const response = await request.get<QueueTask[]>('/download/bilibili/queue/list')
+
     if (response.code === 200 && response.data) {
       return response.data
     } else {

@@ -4,22 +4,14 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  base: process.env.VITE_APP_BASE_PATH || '/omni/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
     }
   },
   server: {
-    port: 3000,
+    port: Number(process.env.VITE_DEV_PORT) || 3000,
     open: true,
-    // 代理配置
-    proxy: {
-      '/api': {
-        target: 'http://guai01bin.dynv6.net:8081',
-        changeOrigin: true,
-        ws: true,
-        // rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
   }
 })
