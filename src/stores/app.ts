@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 export const useAppStore = defineStore('app', () => {
   // 应用名称
@@ -13,6 +13,67 @@ export const useAppStore = defineStore('app', () => {
 
   // 各二级组的折叠状态
   const collapsedGroups = ref<Record<string, boolean>>({})
+
+  // 当前用户信息
+  const currentUser = ref<UserInfo | null>(null)
+
+  /**
+   * 用户信息接口
+   */
+  interface UserInfo {
+    username: string
+    avatar?: string
+    id: string
+  }
+
+  /**
+   * 检查是否已登录
+   */
+  const isLoggedIn = computed(() => {
+    return !!currentUser.value
+  })
+
+  /**
+   * 获取当前用户
+   */
+  const getUser = () => {
+    return currentUser.value
+  }
+
+  /**
+   * 设置当前用户
+   */
+  const setUser = (user: UserInfo | null) => {
+    currentUser.value = user
+  }
+
+  /**
+   * 从本地存储加载用户信息
+   */
+  const loadUserFromStorage = () => {
+    try {
+      const userStr = localStorage.getItem('omni_user') || sessionStorage.getItem('omni_user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        currentUser.value = {
+          id: user.id || '1',
+          username: user.username,
+          avatar: user.avatar
+        }
+      }
+    } catch (e) {
+      console.error('加载用户信息失败:', e)
+    }
+  }
+
+  /**
+   * 退出登录
+   */
+  const logout = () => {
+    currentUser.value = null
+    localStorage.removeItem('omni_user')
+    sessionStorage.removeItem('omni_user')
+  }
 
   // 更新时间问候语
   const updateGreeting = () => {
@@ -53,12 +114,19 @@ export const useAppStore = defineStore('app', () => {
 
   // 初始化
   updateGreeting()
+  loadUserFromStorage()
 
   return {
     appName,
     greeting,
     activeCategory,
     collapsedGroups,
+    currentUser,
+    isLoggedIn,
+    getUser,
+    setUser,
+    loadUserFromStorage,
+    logout,
     updateGreeting,
     setActiveCategory,
     toggleGroup,

@@ -12,8 +12,17 @@ const FeaturePage = () => import('@/views/feature/index.vue')
 const JsonEscapeConvertPage = () => import('@/views/tools/json-escape-convert.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
+// 登录页面（懒加载）
+const LoginPage = () => import('@/views/login/index.vue')
+
 // 静态路由
 const routes: RouteRecordRaw[] = [
+  // 登录页面（独立路由，不嵌套）
+  {
+    path: '/login',
+    name: 'Login',
+    component: LoginPage
+  },
   {
     path: '/',
     name: 'Home',
