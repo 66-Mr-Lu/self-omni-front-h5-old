@@ -100,6 +100,7 @@ import { ref, reactive } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { showToast } from 'vant'
 import { login, LoginRequest } from '@/api/auth'
+import { encryptPassword } from '@/utils/crypto'
 
 // 状态管理
 const appStore = useAppStore()
@@ -176,10 +177,10 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    // 构建登录请求参数
+    // 构建登录请求参数（密码加密）
     const loginParams: LoginRequest = {
       username: form.username,
-      password: form.password
+      password: encryptPassword(form.password)
     }
 
     // 调用登录接口
