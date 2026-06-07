@@ -71,10 +71,10 @@
       </form>
 
       <!-- 注册入口 -->
-      <div class="mt-6 text-center">
-        <span class="text-gray-500 text-sm">还没有账号？</span>
-        <a href="#" class="text-primary ml-1 hover:text-primary-dark">立即注册</a>
-      </div>
+<!--      <div class="mt-6 text-center">-->
+<!--        <span class="text-gray-500 text-sm">还没有账号？</span>-->
+<!--        <a href="#" class="text-primary ml-1 hover:text-primary-dark">立即注册</a>-->
+<!--      </div>-->
 
       <!-- 第三方登录 -->
       <div class="mt-6 pt-6 border-t border-gray-100">
@@ -99,6 +99,7 @@
 import { ref, reactive } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { showToast } from 'vant'
+import { login, LoginRequest } from '@/api/auth'
 
 // 状态管理
 const appStore = useAppStore()
@@ -106,10 +107,12 @@ const appStore = useAppStore()
 /**
  * 登录成功后设置用户状态
  */
-const setLoginUser = (username: string) => {
+const setLoginUser = (user: { id: string; username: string; nickname?: string; avatar?: string }) => {
   appStore.setUser({
-    id: '1',
-    username: username
+    id: user.id,
+    username: user.username,
+    nickname: user.nickname,
+    avatar: user.avatar
   })
 }
 
@@ -173,42 +176,52 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    // 模拟登录请求
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // 模拟登录成功
-    if (form.username === 'admin' && form.password === '123456') {
-      // 保存登录状态
-      if (form.rememberMe) {
-        localStorage.setItem('omni_user', JSON.stringify({ username: form.username }))
-      } else {
-        sessionStorage.setItem('omni_user', JSON.stringify({ username: form.username }))
-      }
-
-      // 设置用户状态到 store
-      setLoginUser(form.username)
-
-      showToast({
-        message: '登录成功',
-        position: 'top'
-      })
-
-      // 跳转到首页（使用相对路径）
-      setTimeout(() => {
-        const basePath = import.meta.env.VITE_APP_BASE_PATH || '/omni/'
-        window.location.href = basePath
-      }, 1000)
-    } else {
-      showToast({
-        message: '用户名或密码错误',
-        position: 'top'
-      })
+    // 构建登录请求参数
+    const loginParams: LoginRequest = {
+      username: form.username,
+      password: form.password
     }
-  } catch (error) {
+
+    // 调用登录接口
+    const response = await login(loginParams)
+
+    // 保存登录状态（匹配后端返回结构：userId、username、nickname、token）
+    const userData = {
+      id: response.userId,
+      username: response.username,
+      nickname: response.nickname,
+      token: response.token
+    }
+
+    if (form.rememberMe) {
+      localStorage.setItem('omni_user', JSON.stringify(userData))
+    } else {
+      sessionStorage.setItem('omni_user', JSON.stringify(userData))
+    }
+
+    // 保存 token 到本地存储（用于后续请求）
+    localStorage.setItem('omni_token', response.token)
+
+    // 设置用户状态到 store
+    setLoginUser({
+      id: response.userId,
+      username: response.username,
+      nickname: response.nickname
+    })
+
     showToast({
-      message: '登录失败，请稍后重试',
+      message: '登录成功',
       position: 'top'
     })
+
+    // 跳转到首页（使用相对路径）
+    setTimeout(() => {
+      const basePath = import.meta.env.VITE_APP_BASE_PATH || '/omni/'
+      window.location.href = basePath
+    }, 1000)
+  } catch (error) {
+    // 错误处理由 axios 响应拦截器统一处理
+    // 此处仅需确保 loading 状态被重置
   } finally {
     isLoading.value = false
   }

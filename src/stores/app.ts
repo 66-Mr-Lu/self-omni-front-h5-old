@@ -21,9 +21,10 @@ export const useAppStore = defineStore('app', () => {
    * 用户信息接口
    */
   interface UserInfo {
-    username: string
-    avatar?: string
     id: string
+    username: string
+    nickname?: string
+    avatar?: string
   }
 
   /**
@@ -58,6 +59,7 @@ export const useAppStore = defineStore('app', () => {
         currentUser.value = {
           id: user.id || '1',
           username: user.username,
+          nickname: user.nickname,
           avatar: user.avatar
         }
       }
