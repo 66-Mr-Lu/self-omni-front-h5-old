@@ -70,11 +70,24 @@ export const useAppStore = defineStore('app', () => {
 
   /**
    * 退出登录
+   * @param callApi 是否调用后端接口（默认调用）
    */
-  const logout = () => {
+  const logout = async (callApi: boolean = true) => {
+    if (callApi) {
+      try {
+        // 导入 logout 函数避免循环依赖
+        const { logout: apiLogout } = await import('@/api/auth')
+        await apiLogout()
+      } catch (error) {
+        console.error('调用退出登录接口失败:', error)
+        // 接口调用失败不阻止本地退出
+      }
+    }
     currentUser.value = null
     localStorage.removeItem('omni_user')
     sessionStorage.removeItem('omni_user')
+    localStorage.removeItem('omni_token')
+    sessionStorage.removeItem('omni_token')
   }
 
   // 更新时间问候语

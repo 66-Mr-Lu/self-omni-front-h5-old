@@ -8,15 +8,65 @@
           <p class="text-white text-opacity-80 text-xs">{{ appStore.greeting }}👋</p>
         </div>
         <!-- 个人中心入口 -->
-        <button
-          @click="handleProfileClick"
-          class="w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center hover:bg-opacity-30 transition-opacity"
-        >
-          <span v-if="appStore.isLoggedIn" class="text-white">👤</span>
-          <span v-else class="text-white">👥</span>
-        </button>
+        <div class="relative">
+          <button
+            @click="handleProfileClick"
+            class="flex items-center justify-center transition-opacity"
+            :class="appStore.isLoggedIn ? 'w-9 h-9 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30' : 'px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-sm font-medium'"
+          >
+            <span v-if="appStore.isLoggedIn" class="text-white">👤</span>
+            <span v-else class="text-white">去登录</span>
+          </button>
+          
+          <!-- 下拉菜单（仅已登录时显示） -->
+          <div
+            v-if="showUserMenu"
+            class="dropdown-menu absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
+          >
+            <div class="px-4 py-2 border-b border-gray-100">
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center mr-2">
+                  <span class="text-white text-sm">👤</span>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">{{ currentUser?.nickname || currentUser?.username }}</p>
+                  <p class="text-xs text-gray-500">{{ currentUser?.username }}</p>
+                </div>
+              </div>
+            </div>
+            <button
+              @click="goToProfile"
+              class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+            >
+              <span class="mr-2">👤</span>
+              <span>个人中心</span>
+            </button>
+            <button
+              @click="goToSettings"
+              class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+            >
+              <span class="mr-2">⚙️</span>
+              <span>设置</span>
+            </button>
+            <div class="border-t border-gray-100 my-1"></div>
+            <button
+              @click="handleLogout"
+              class="dropdown-item w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center"
+            >
+              <span class="mr-2">🚪</span>
+              <span>退出登录</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- 点击外部关闭下拉菜单 -->
+    <div
+      v-if="showUserMenu"
+      class="dropdown-overlay fixed inset-0 z-40"
+      @click="showUserMenu = false"
+    ></div>
 
     <!-- 主内容区 - 使用 router-view 显示子页面 -->
     <div class="content pt-16 px-4 pb-6">
@@ -35,29 +85,88 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useAppStore } from '@/stores/app'
 import BottomTab from '@/components/BottomTab.vue'
-import { showToast } from 'vant'
+import { showToast, showDialog } from 'vant'
 
 // 状态管理
 const appStore = useAppStore()
 
+// 用户菜单显示状态
+const showUserMenu = ref(false)
+
+// 当前用户信息
+const currentUser = computed(() => appStore.getUser())
+
 /**
  * 处理个人中心点击
+ * 未登录时直接跳转到登录页，已登录时显示下拉菜单
  */
 const handleProfileClick = () => {
   if (appStore.isLoggedIn) {
-    // 已登录，显示用户信息
-    const user = appStore.getUser()
-    showToast({
-      message: `欢迎回来，${user?.username || '用户'}`,
-      position: 'top'
-    })
+    // 已登录，切换下拉菜单显示状态
+    showUserMenu.value = !showUserMenu.value
   } else {
-    // 未登录，跳转到登录页（使用相对路径）
+    // 未登录，直接跳转到登录页
     const basePath = import.meta.env.VITE_APP_BASE_PATH || '/omni/'
     window.location.href = `${basePath}login`
   }
+}
+
+/**
+ * 跳转到个人中心（预留）
+ */
+const goToProfile = () => {
+  showUserMenu.value = false
+  showToast({
+    message: '个人中心功能开发中',
+    position: 'top'
+  })
+}
+
+/**
+ * 跳转到设置（预留）
+ */
+const goToSettings = () => {
+  showUserMenu.value = false
+  showToast({
+    message: '设置功能开发中',
+    position: 'top'
+  })
+}
+
+/**
+ * 处理退出登录
+ */
+const handleLogout = () => {
+  showUserMenu.value = false
+  showDialog({
+    title: '确认退出',
+    message: '确定要退出登录吗？',
+    confirmButtonText: '退出',
+    confirmButtonColor: '#ef4444',
+    cancelButtonText: '取消'
+  }).then(async () => {
+    // 用户点击确认退出
+    try {
+      await appStore.logout()
+      showToast({
+        message: '退出成功',
+        position: 'top'
+      })
+      // 刷新页面回到首页
+      const basePath = import.meta.env.VITE_APP_BASE_PATH || '/omni/'
+      window.location.href = basePath
+    } catch (error) {
+      showToast({
+        message: '退出失败',
+        position: 'top'
+      })
+    }
+  }).catch(() => {
+    // 用户点击取消，不做任何操作
+  })
 }
 </script>
 
