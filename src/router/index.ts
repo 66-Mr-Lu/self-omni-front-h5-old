@@ -10,6 +10,7 @@ const ControlPage = () => import('@/views/control/index.vue')
 // 功能详情页面（懒加载）
 const FeaturePage = () => import('@/views/feature/index.vue')
 const JsonEscapeConvertPage = () => import('@/views/tools/json-escape-convert.vue')
+const TextProcessorPage = () => import('@/views/tools/text-processor.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
 // 登录页面（懒加载）
@@ -34,6 +35,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        name: 'HomeIndex',
         redirect: 'ops'
       },
       {
@@ -89,6 +91,12 @@ const routes: RouteRecordRaw[] = [
         path: 'tools/json-escape-convert',
         name: 'JsonEscapeConvert',
         component: JsonEscapeConvertPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/text-processor',
+        name: 'TextProcessor',
+        component: TextProcessorPage,
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {
