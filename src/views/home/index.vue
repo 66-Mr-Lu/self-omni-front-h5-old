@@ -86,9 +86,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import BottomTab from '@/components/BottomTab.vue'
 import { showToast, showDialog } from 'vant'
+
+// 路由
+const router = useRouter()
 
 // 状态管理
 const appStore = useAppStore()
@@ -115,15 +119,12 @@ const handleProfileClick = () => {
 }
 
 /**
- * 跳转到个人中心（预留）
- */
-const goToProfile = () => {
-  showUserMenu.value = false
-  showToast({
-    message: '个人中心功能开发中',
-    position: 'top'
-  })
-}
+   * 跳转到个人中心
+   */
+  const goToProfile = () => {
+    showUserMenu.value = false
+    router.push('/profile')
+  }
 
 /**
  * 跳转到设置（预留）

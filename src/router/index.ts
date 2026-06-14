@@ -15,6 +15,10 @@ const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 // 登录页面（懒加载）
 const LoginPage = () => import('@/views/login/index.vue')
 
+// 个人中心页面（懒加载）
+const ProfilePage = () => import('@/views/profile/index.vue')
+const ProfileEditPage = () => import('@/views/profile/edit.vue')
+
 // 静态路由
 const routes: RouteRecordRaw[] = [
   // 登录页面（独立路由，不嵌套）
@@ -92,6 +96,18 @@ const routes: RouteRecordRaw[] = [
         name: 'BilibiliDownload',
         component: BilibiliDownloadPage,
         meta: { categoryId: 'download', requiresAuth: false }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: ProfilePage,
+        meta: { categoryId: 'profile', requiresAuth: false }
+      },
+      {
+        path: 'profile/edit',
+        name: 'ProfileEdit',
+        component: ProfileEditPage,
+        meta: { categoryId: 'profile', requiresAuth: false }
       }
     ]
   }

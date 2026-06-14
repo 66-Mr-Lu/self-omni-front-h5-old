@@ -5,6 +5,9 @@ export const useAppStore = defineStore('app', () => {
   // 应用名称
   const appName = ref('Omni工具箱')
 
+  // 应用版本
+  const appVersion = ref('1.0.0')
+
   // 欢迎语
   const greeting = ref('')
 
@@ -133,6 +136,7 @@ export const useAppStore = defineStore('app', () => {
 
   return {
     appName,
+    appVersion,
     greeting,
     activeCategory,
     collapsedGroups,
