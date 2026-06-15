@@ -40,8 +40,8 @@
         </span>
       </div>
 
-      <!-- 匹配项列表 -->
-      <div v-if="result?.matches.length > 0" class="matches-list">
+      <!-- 匹配项列表（暂时注释，后续可能会用） -->
+      <!-- <div v-if="result?.matches.length > 0" class="matches-list">
         <div
           v-for="(match, index) in result.matches"
           :key="index"
@@ -56,10 +56,9 @@
         </div>
       </div>
 
-      <!-- 无匹配项 -->
       <div v-else class="no-matches">
         <van-empty description="未找到匹配项" />
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
