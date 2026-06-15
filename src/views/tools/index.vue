@@ -59,6 +59,12 @@ const handleChildClick = (item: LeafMenu) => {
     return
   }
   
+  // Unicode编解码功能跳转到对应的页面
+  if (item.action === 'unicodeConvert' && item.routePath) {
+    router.push(item.routePath)
+    return
+  }
+  
   // 文本处理功能跳转到对应的页面
   if (item.action === 'textProcessor' && item.routePath) {
     router.push(item.routePath)
