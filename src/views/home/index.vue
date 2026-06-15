@@ -7,55 +7,66 @@
           <h1 class="text-white text-lg font-semibold">{{ appStore.appName }}</h1>
           <p class="text-white text-opacity-80 text-xs">{{ appStore.greeting }}👋</p>
         </div>
-        <!-- 个人中心入口 -->
-        <div class="relative">
+        <!-- 右侧按钮组 -->
+        <div class="flex items-center space-x-3">
+          <!-- 搜索按钮 -->
           <button
-            @click="handleProfileClick"
-            class="flex items-center justify-center transition-opacity"
-            :class="appStore.isLoggedIn ? 'w-9 h-9 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30' : 'px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-sm font-medium'"
+            @click="showSearch = true"
+            class="w-9 h-9 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-opacity"
           >
-            <span v-if="appStore.isLoggedIn" class="text-white">👤</span>
-            <span v-else class="text-white">去登录</span>
+            <span class="text-white text-lg">🔍</span>
           </button>
           
-          <!-- 下拉菜单（仅已登录时显示） -->
-          <div
-            v-if="showUserMenu"
-            class="dropdown-menu absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
-          >
-            <div class="px-4 py-2 border-b border-gray-100">
-              <div class="flex items-center">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center mr-2">
-                  <span class="text-white text-sm">👤</span>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-800">{{ currentUser?.nickname || currentUser?.username }}</p>
-                  <p class="text-xs text-gray-500">{{ currentUser?.username }}</p>
+          <!-- 个人中心入口 -->
+          <div class="relative">
+            <button
+              @click="handleProfileClick"
+              class="flex items-center justify-center transition-opacity"
+              :class="appStore.isLoggedIn ? 'w-9 h-9 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30' : 'px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-sm font-medium'"
+            >
+              <span v-if="appStore.isLoggedIn" class="text-white">👤</span>
+              <span v-else class="text-white">去登录</span>
+            </button>
+            
+            <!-- 下拉菜单（仅已登录时显示） -->
+            <div
+              v-if="showUserMenu"
+              class="dropdown-menu absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
+            >
+              <div class="px-4 py-2 border-b border-gray-100">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center mr-2">
+                    <span class="text-white text-sm">👤</span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-800">{{ currentUser?.nickname || currentUser?.username }}</p>
+                    <p class="text-xs text-gray-500">{{ currentUser?.username }}</p>
+                  </div>
                 </div>
               </div>
+              <button
+                @click="goToProfile"
+                class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+              >
+                <span class="mr-2">👤</span>
+                <span>个人中心</span>
+              </button>
+              <button
+                @click="goToSettings"
+                class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+              >
+                <span class="mr-2">⚙️</span>
+                <span>设置</span>
+              </button>
+              <div class="border-t border-gray-100 my-1"></div>
+              <button
+                @click="handleLogout"
+                class="dropdown-item w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center"
+              >
+                <span class="mr-2">🚪</span>
+                <span>退出登录</span>
+              </button>
             </div>
-            <button
-              @click="goToProfile"
-              class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-            >
-              <span class="mr-2">👤</span>
-              <span>个人中心</span>
-            </button>
-            <button
-              @click="goToSettings"
-              class="dropdown-item w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
-            >
-              <span class="mr-2">⚙️</span>
-              <span>设置</span>
-            </button>
-            <div class="border-t border-gray-100 my-1"></div>
-            <button
-              @click="handleLogout"
-              class="dropdown-item w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center"
-            >
-              <span class="mr-2">🚪</span>
-              <span>退出登录</span>
-            </button>
           </div>
         </div>
       </div>
@@ -81,6 +92,9 @@
 
     <!-- 底部 Tab 导航 -->
     <BottomTab />
+
+    <!-- 搜索菜单弹窗 -->
+    <SearchMenu v-model:show="showSearch" />
   </div>
 </template>
 
@@ -89,6 +103,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import BottomTab from '@/components/BottomTab.vue'
+import SearchMenu from '@/components/SearchMenu.vue'
 import { showToast, showDialog } from 'vant'
 
 // 路由
@@ -96,6 +111,9 @@ const router = useRouter()
 
 // 状态管理
 const appStore = useAppStore()
+
+// 搜索弹窗显示状态
+const showSearch = ref(false)
 
 // 用户菜单显示状态
 const showUserMenu = ref(false)
@@ -119,12 +137,12 @@ const handleProfileClick = () => {
 }
 
 /**
-   * 跳转到个人中心
-   */
-  const goToProfile = () => {
-    showUserMenu.value = false
-    router.push('/profile')
-  }
+ * 跳转到个人中心
+ */
+const goToProfile = () => {
+  showUserMenu.value = false
+  router.push('/profile')
+}
 
 /**
  * 跳转到设置（预留）

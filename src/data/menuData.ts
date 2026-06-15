@@ -7,6 +7,8 @@ export interface LeafMenu {
   badge?: number
   priority?: number            // 优先级，数值越小优先级越高，默认 100
   routePath?: string           // 路由路径（可选）
+  desc?: string                // 功能描述（可选）
+  tags?: string[]              // 关键词标签数组（可选）
 }
 
 // 二级菜单组类型
@@ -50,8 +52,26 @@ export const menuData: TopCategory[] = [
     priority: 10,              // 运维优先级最高
     // 直接的叶子菜单
     items: [
-      { id: 'shutdown', name: '关机', icon: '🔴', action: 'shutdown', priority: 10, routePath: '/ops/shutdown' },
-      { id: 'remote-power', name: '远程开机', icon: '🟢', action: 'remotePower', priority: 20, routePath: '/ops/remote-power' }
+      { 
+        id: 'shutdown', 
+        name: '关机', 
+        icon: '🔴', 
+        action: 'shutdown', 
+        priority: 10, 
+        routePath: '/ops/shutdown',
+        desc: '远程关闭计算机',
+        tags: ['关机', 'shutdown', '电源', '远程']
+      },
+      { 
+        id: 'remote-power', 
+        name: '远程开机', 
+        icon: '🟢', 
+        action: 'remotePower', 
+        priority: 20, 
+        routePath: '/ops/remote-power',
+        desc: '通过网络远程启动计算机',
+        tags: ['开机', 'WOL', '网络唤醒', '远程']
+      }
     ],
     // 二级菜单组
     groups: [
@@ -62,10 +82,46 @@ export const menuData: TopCategory[] = [
         collapsed: true,
         priority: 30,
         children: [
-          { id: 'cpu', name: 'CPU状态', icon: '💻', action: 'cpuMonitor', priority: 10, routePath: '/ops/monitor/cpu' },
-          { id: 'memory', name: '内存使用率', icon: '🧠', action: 'memoryMonitor', priority: 20, routePath: '/ops/monitor/memory' },
-          { id: 'disk', name: '硬盘健康度', icon: '💾', action: 'diskMonitor', priority: 30, routePath: '/ops/monitor/disk' },
-          { id: 'network', name: 'IP信息', icon: '🌐', action: 'networkInfo', priority: 40, routePath: '/ops/monitor/network' }
+          { 
+            id: 'cpu', 
+            name: 'CPU状态', 
+            icon: '💻', 
+            action: 'cpuMonitor', 
+            priority: 10, 
+            routePath: '/ops/monitor/cpu',
+            desc: '实时监控CPU使用率和温度',
+            tags: ['CPU', '处理器', '监控', '性能']
+          },
+          { 
+            id: 'memory', 
+            name: '内存使用率', 
+            icon: '🧠', 
+            action: 'memoryMonitor', 
+            priority: 20, 
+            routePath: '/ops/monitor/memory',
+            desc: '查看内存使用情况',
+            tags: ['内存', 'RAM', '监控', '性能']
+          },
+          { 
+            id: 'disk', 
+            name: '硬盘健康度', 
+            icon: '💾', 
+            action: 'diskMonitor', 
+            priority: 30, 
+            routePath: '/ops/monitor/disk',
+            desc: '检测硬盘健康状态和温度',
+            tags: ['硬盘', '磁盘', '健康', 'SMART']
+          },
+          { 
+            id: 'network', 
+            name: 'IP信息', 
+            icon: '🌐', 
+            action: 'networkInfo', 
+            priority: 40, 
+            routePath: '/ops/monitor/network',
+            desc: '查看网络IP地址和连接信息',
+            tags: ['IP', '网络', '网卡', '地址']
+          }
         ]
       }
     ]
@@ -78,8 +134,26 @@ export const menuData: TopCategory[] = [
     priority: 20,              // 工具优先级次之
     // 直接的叶子菜单
     items: [
-      { id: 'json-escape-convert', name: 'JSON转义转换', icon: '📝', action: 'jsonEscapeConvert', priority: 10, routePath: '/tools/json-escape-convert' },
-      { id: 'text-processor', name: '文本处理', icon: '📄', action: 'textProcessor', priority: 20, routePath: '/tools/text-processor' }
+      { 
+        id: 'json-escape-convert', 
+        name: 'JSON转义转换', 
+        icon: '📝', 
+        action: 'jsonEscapeConvert', 
+        priority: 10, 
+        routePath: '/tools/json-escape-convert',
+        desc: 'JSON字符串转义与反转义工具',
+        tags: ['JSON', '转义', '格式化', '字符串']
+      },
+      { 
+        id: 'text-processor', 
+        name: '文本处理', 
+        icon: '📄', 
+        action: 'textProcessor', 
+        priority: 20, 
+        routePath: '/tools/text-processor',
+        desc: '强大的文本处理工具，支持查找、替换、格式化',
+        tags: ['文本', '查找', '替换', '格式化', '编辑']
+      }
     ],
     // 二级菜单组
     groups: [
@@ -90,8 +164,26 @@ export const menuData: TopCategory[] = [
         collapsed: true,
         priority: 10,
         children: [
-          { id: 'rsa-keygen', name: 'RSA密钥对生成器', icon: '🔑', action: 'rsaKeygen', priority: 10, routePath: '/tools/encrypt/rsa-keygen' },
-          { id: 'encrypt-decrypt', name: '加密/解密文本', icon: '🔒', action: 'encryptDecrypt', priority: 20, routePath: '/tools/encrypt/encrypt-decrypt' }
+          { 
+            id: 'rsa-keygen', 
+            name: 'RSA密钥对生成器', 
+            icon: '🔑', 
+            action: 'rsaKeygen', 
+            priority: 10, 
+            routePath: '/tools/encrypt/rsa-keygen',
+            desc: '生成RSA公钥和私钥对',
+            tags: ['RSA', '密钥', '加密', '公钥', '私钥']
+          },
+          { 
+            id: 'encrypt-decrypt', 
+            name: '加密/解密文本', 
+            icon: '🔒', 
+            action: 'encryptDecrypt', 
+            priority: 20, 
+            routePath: '/tools/encrypt/encrypt-decrypt',
+            desc: '对文本进行加密和解密操作',
+            tags: ['加密', '解密', 'AES', 'DES', '安全']
+          }
         ]
       }
     ]
@@ -104,8 +196,26 @@ export const menuData: TopCategory[] = [
     priority: 30,              // 下载优先级第三
     // 直接的叶子菜单（没有二级菜单组）
     items: [
-      { id: 'bilibili-download', name: 'bilibili视频下载', icon: '📺', action: 'bilibiliDownload', priority: 10, routePath: '/download/bilibili' },
-      { id: 'douyin-download', name: '抖音视频下载', icon: '📱', action: 'douyinDownload', priority: 20, routePath: '/download/douyin' }
+      { 
+        id: 'bilibili-download', 
+        name: 'bilibili视频下载', 
+        icon: '📺', 
+        action: 'bilibiliDownload', 
+        priority: 10, 
+        routePath: '/download/bilibili',
+        desc: '下载B站视频和音频',
+        tags: ['B站', 'bilibili', '视频', '下载', 'Bilibili']
+      },
+      { 
+        id: 'douyin-download', 
+        name: '抖音视频下载', 
+        icon: '📱', 
+        action: 'douyinDownload', 
+        priority: 20, 
+        routePath: '/download/douyin',
+        desc: '下载抖音短视频',
+        tags: ['抖音', 'douyin', '视频', '下载', 'TikTok']
+      }
     ],
     groups: []
   },
@@ -117,7 +227,16 @@ export const menuData: TopCategory[] = [
     priority: 40,              // 控制优先级最低
     // 直接的叶子菜单（没有二级菜单组）
     items: [
-      { id: 'air-conditioner', name: '空调控制', icon: '❄️', action: 'airConditioner', priority: 10, routePath: '/control/air-conditioner' }
+      { 
+        id: 'air-conditioner', 
+        name: '空调控制', 
+        icon: '❄️', 
+        action: 'airConditioner', 
+        priority: 10, 
+        routePath: '/control/air-conditioner',
+        desc: '智能空调远程控制',
+        tags: ['空调', '温度', '控制', '智能家居']
+      }
     ],
     groups: []
   }

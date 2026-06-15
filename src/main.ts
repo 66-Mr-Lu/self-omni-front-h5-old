@@ -16,7 +16,11 @@ import {
   Tabs, 
   Tab, 
   Empty, 
-  Dialog 
+  Dialog,
+  Search,
+  Popup,
+  Cell,
+  CellGroup
 } from 'vant'
 
 const app = createApp(App)
@@ -33,5 +37,9 @@ app.use(Tabs)
 app.use(Tab)
 app.use(Empty)
 app.use(Dialog)
+app.use(Search)
+app.use(Popup)
+app.use(Cell)
+app.use(CellGroup)
 
 app.mount('#app')
