@@ -145,6 +145,16 @@ export const menuData: TopCategory[] = [
         tags: ['JSON', '转义', '格式化', '字符串']
       },
       { 
+        id: 'unicode-convert', 
+        name: 'Unicode编解码', 
+        icon: '🔤', 
+        action: 'unicodeConvert', 
+        priority: 15, 
+        routePath: '/tools/unicode-convert',
+        desc: 'Unicode编码与解码转换工具',
+        tags: ['Unicode', '编码', '解码', '字符', '转换']
+      },
+      { 
         id: 'text-processor', 
         name: '文本处理', 
         icon: '📄', 

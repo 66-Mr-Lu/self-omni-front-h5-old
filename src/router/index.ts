@@ -11,6 +11,7 @@ const ControlPage = () => import('@/views/control/index.vue')
 const FeaturePage = () => import('@/views/feature/index.vue')
 const JsonEscapeConvertPage = () => import('@/views/tools/json-escape-convert.vue')
 const TextProcessorPage = () => import('@/views/tools/text-processor.vue')
+const UnicodeConvertPage = () => import('@/views/tools/unicode-convert.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
 // 登录页面（懒加载）
@@ -97,6 +98,12 @@ const routes: RouteRecordRaw[] = [
         path: 'tools/text-processor',
         name: 'TextProcessor',
         component: TextProcessorPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/unicode-convert',
+        name: 'UnicodeConvert',
+        component: UnicodeConvertPage,
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {

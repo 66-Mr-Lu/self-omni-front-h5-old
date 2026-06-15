@@ -20,7 +20,9 @@ import {
   Search,
   Popup,
   Cell,
-  CellGroup
+  CellGroup,
+  Radio,
+  RadioGroup
 } from 'vant'
 
 const app = createApp(App)
@@ -41,5 +43,7 @@ app.use(Search)
 app.use(Popup)
 app.use(Cell)
 app.use(CellGroup)
+app.use(Radio)
+app.use(RadioGroup)
 
 app.mount('#app')
