@@ -1,14 +1,13 @@
 <template>
   <div class="text-editor">
-    <!-- 文本输入区 -->
-    <div class="editor-wrapper">
-      <textarea
-        v-model="localText"
-        class="editor-textarea"
-        placeholder="请输入或粘贴文本..."
-        @input="handleInput"
-      ></textarea>
-    </div>
+    <!-- CodeMirror 编辑器 -->
+    <CodeMirrorEditor
+      ref="editorRef"
+      v-model="localText"
+      :dark-mode="true"
+      @change="handleChange"
+      @cursorActivity="handleCursorActivity"
+    />
 
     <!-- 统计信息 -->
     <div class="editor-stats">
@@ -26,8 +25,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 文本编辑器组件
+ * 基于 CodeMirror 6 的高性能代码编辑器
+ */
 import { ref, computed, watch } from 'vue'
 import { showToast, showSuccessToast } from 'vant'
+import CodeMirrorEditor from './CodeMirrorEditor.vue'
 import { getTextStatistics } from '@/utils/textProcessor'
 import type { TextStatistics } from '@/types/textProcessor'
 
@@ -41,7 +45,12 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
+  (e: 'change', value: string): void
+  (e: 'cursorActivity', selection: any): void
 }>()
+
+// 编辑器引用
+const editorRef = ref<InstanceType<typeof CodeMirrorEditor> | null>(null)
 
 // 本地文本
 const localText = ref(props.modelValue)
@@ -55,19 +64,30 @@ const stats = computed<TextStatistics>(() => {
 watch(
   () => props.modelValue,
   (newValue) => {
-    localText.value = newValue
+    if (newValue !== localText.value) {
+      localText.value = newValue
+      editorRef.value?.setValue(newValue)
+    }
   }
 )
 
-// 处理输入
-const handleInput = () => {
-  emit('update:modelValue', localText.value)
+// 处理内容变化
+const handleChange = (value: string) => {
+  emit('update:modelValue', value)
+  emit('change', value)
+}
+
+// 处理光标位置变化
+const handleCursorActivity = (selection: any) => {
+  emit('cursorActivity', selection)
 }
 
 // 清空文本
 const handleClear = () => {
   localText.value = ''
+  editorRef.value?.setValue('')
   emit('update:modelValue', '')
+  emit('change', '')
   showToast('已清空')
 }
 
@@ -90,7 +110,9 @@ Hello World! This is a test.
 - 文本统计：字符数、单词数、行数等`
 
   localText.value = example
+  editorRef.value?.setValue(example)
   emit('update:modelValue', example)
+  emit('change', example)
   showSuccessToast('已加载示例')
 }
 
@@ -103,6 +125,28 @@ const handleCopy = async () => {
     showToast('复制失败')
   }
 }
+
+// 获取编辑器实例
+const getEditorView = () => {
+  return editorRef.value?.getEditorView()
+}
+
+// 设置高亮
+const setHighlights = (matches: Array<{ from: number; to: number }>) => {
+  editorRef.value?.setHighlights(matches)
+}
+
+// 清除高亮
+const clearHighlights = () => {
+  editorRef.value?.clearHighlights()
+}
+
+// 暴露方法给父组件
+defineExpose({
+  getEditorView,
+  setHighlights,
+  clearHighlights
+})
 </script>
 
 <style scoped>
@@ -112,37 +156,22 @@ const handleCopy = async () => {
   gap: 12px;
 }
 
-.editor-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.editor-textarea {
-  width: 100%;
-  min-height: 200px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.6;
-  resize: vertical;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.editor-textarea:focus {
-  border-color: #1989fa;
-}
-
 .editor-stats {
   display: flex;
   gap: 16px;
   font-size: 12px;
-  color: #6b7280;
+  color: #969799;
+  padding: 0 4px;
 }
 
 .editor-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.editor-actions .van-button {
+  flex: 1;
+  min-width: 80px;
 }
 </style>

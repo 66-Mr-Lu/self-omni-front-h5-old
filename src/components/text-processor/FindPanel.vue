@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { showToast } from 'vant'
 import { findText } from '@/utils/textProcessor'
 import type { FindResult, MatchItem, FindOptions } from '@/types/textProcessor'
@@ -77,6 +77,14 @@ const options = ref<FindOptions>({
   caseSensitive: false,
   wholeWord: false,
   useRegex: false
+})
+
+// 监听 keyword 变化，当清空时清除结果和高亮
+watch(keyword, (newKeyword) => {
+  if (!newKeyword.trim()) {
+    result.value = null
+    emit('highlight', [])
+  }
 })
 
 // 查找结果
