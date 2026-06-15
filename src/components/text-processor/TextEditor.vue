@@ -78,6 +78,8 @@ watch(
 
 // 处理内容变化
 const handleChange = (value: string) => {
+  // 更新本地状态，确保复制、统计等功能使用最新内容
+  localText.value = value
   emit('update:modelValue', value)
   emit('change', value)
 }

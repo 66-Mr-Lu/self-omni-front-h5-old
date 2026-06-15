@@ -128,8 +128,11 @@ const createExtensions = () => {
     // 更新监听
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
-        // 内容变化时清除高亮
+        // 内容变化时清除高亮并发出change事件
         clearHighlights()
+        const newValue = update.state.doc.toString()
+        emit('update:modelValue', newValue)
+        emit('change', newValue)
       }
       if (update.selectionSet) {
         emit('cursorActivity', update.state.selection)
