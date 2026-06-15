@@ -172,6 +172,20 @@ export function replaceText(
     const count = matches ? matches.length : 0
     const newText = text.replace(regex, operation.replaceText)
     return { newText, replaceCount: count }
+  } else if (operation.startIndex !== undefined && operation.startIndex >= 0) {
+    // 从指定位置开始替换单个匹配项
+    const substring = text.substring(operation.startIndex)
+    const match = substring.match(regex)
+    
+    if (match) {
+      const matchIndex = operation.startIndex + match.index
+      const newText = text.substring(0, matchIndex) + 
+                      operation.replaceText + 
+                      text.substring(matchIndex + match[0].length)
+      return { newText, replaceCount: 1 }
+    }
+    
+    return { newText: text, replaceCount: 0 }
   } else {
     // 只替换第一个匹配项
     const newText = text.replace(regex, operation.replaceText)

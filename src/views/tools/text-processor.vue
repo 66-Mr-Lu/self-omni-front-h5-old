@@ -13,13 +13,20 @@
     <!-- 内容区域 -->
     <div class="content pt-16">
       <!-- 文本编辑器 -->
-      <TextEditor ref="editorRef" v-model="text" />
+      <TextEditor ref="editorRef" v-model="text">
+        <template #match-count>
+          <span v-if="matchCount > 0" class="match-count">
+            {{ currentMatchIndex + 1 }} / {{ matchCount }}
+          </span>
+        </template>
+      </TextEditor>
 
       <!-- 标签栏 -->
       <van-tabs v-model:active="activeTab" sticky>
         <van-tab title="查找">
           <FindPanel
             :text="text"
+            :get-cursor-position="handleGetCursorPosition"
             @highlight="handleHighlight"
             @jump-to="handleJumpTo"
             @replace="handleReplace"
@@ -58,6 +65,10 @@ const text = ref('')
 // 当前标签
 const activeTab = ref<number>(0)
 
+// 匹配计数
+const matchCount = ref(0)
+const currentMatchIndex = ref(0)
+
 // 返回上一页
 const goBack = () => {
   router.back()
@@ -65,6 +76,8 @@ const goBack = () => {
 
 // 处理高亮
 const handleHighlight = (matches: MatchItem[]) => {
+  // 更新匹配计数
+  matchCount.value = matches.length
   // 将匹配项转换为高亮范围
   const highlights = matches.map(match => ({
     from: match.index,
@@ -79,6 +92,9 @@ const handleReplace = (newText: string) => {
   text.value = newText
   // 清除高亮
   editorRef.value?.clearHighlights()
+  // 重置匹配计数
+  matchCount.value = 0
+  currentMatchIndex.value = 0
   showToast('文本已更新')
 }
 
@@ -87,13 +103,21 @@ const handleClean = (newText: string) => {
   text.value = newText
   // 清除高亮
   editorRef.value?.clearHighlights()
+  // 重置匹配计数
+  matchCount.value = 0
+  currentMatchIndex.value = 0
   showToast('文本已清理')
 }
 
 // 处理跳转
-const handleJumpTo = (match: MatchItem) => {
-  console.log('跳转到:', match)
-  showToast(`跳转到 行${match.line} 列${match.column}`)
+const handleJumpTo = (match: MatchItem, index: number) => {
+  currentMatchIndex.value = index
+  editorRef.value?.setCursorPosition(match.index, match.index + match.text.length)
+}
+
+// 获取光标位置
+const handleGetCursorPosition = (): number => {
+  return editorRef.value?.getCursorPosition() ?? -1
 }
 </script>
 
@@ -113,5 +137,11 @@ const handleJumpTo = (match: MatchItem) => {
 
 .van-tab {
   padding: 12px;
+}
+
+.match-count {
+  font-size: 12px;
+  color: #1989fa;
+  font-weight: 500;
 }
 </style>

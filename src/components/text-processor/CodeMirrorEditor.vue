@@ -209,13 +209,46 @@ const getEditorView = (): EditorView | null => {
   return editorView
 }
 
+/**
+ * 设置光标位置并选中指定范围
+ * @param from 起始位置
+ * @param to 结束位置
+ */
+const setCursorPosition = (from: number, to: number) => {
+  if (!editorView) return
+  
+  editorView.dispatch({
+    selection: {
+      anchor: from,
+      head: to
+    },
+    scrollIntoView: true
+  })
+  
+  // 聚焦编辑器
+  editorView.focus()
+}
+
+/**
+ * 获取当前光标位置
+ * @returns 光标位置索引，如果没有则返回 -1
+ */
+const getCursorPosition = (): number => {
+  if (!editorView) return -1
+  
+  const selection = editorView.state.selection.main
+  return selection.from
+}
+
 // 暴露方法给父组件
 defineExpose({
   getValue,
   setValue,
   getEditorView,
   setHighlights,
-  clearHighlights
+  clearHighlights,
+  setCursorPosition,
+  getCursorPosition
 })
 
 // 监听 modelValue 变化

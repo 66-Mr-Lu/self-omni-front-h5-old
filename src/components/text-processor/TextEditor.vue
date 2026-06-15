@@ -11,8 +11,13 @@
 
     <!-- 统计信息 -->
     <div class="editor-stats">
-      <span>字符数: {{ stats.totalChars }}</span>
-      <span>行数: {{ stats.lineCount }}</span>
+      <div class="stats-left">
+        <span>字符数: {{ stats.totalChars }}</span>
+        <span>行数: {{ stats.lineCount }}</span>
+      </div>
+      <div class="stats-right">
+        <slot name="match-count"></slot>
+      </div>
     </div>
 
     <!-- 操作按钮 -->
@@ -141,11 +146,23 @@ const clearHighlights = () => {
   editorRef.value?.clearHighlights()
 }
 
+// 设置光标位置并选中
+const setCursorPosition = (from: number, to: number) => {
+  editorRef.value?.setCursorPosition(from, to)
+}
+
+// 获取当前光标位置
+const getCursorPosition = (): number => {
+  return editorRef.value?.getCursorPosition() ?? -1
+}
+
 // 暴露方法给父组件
 defineExpose({
   getEditorView,
   setHighlights,
-  clearHighlights
+  clearHighlights,
+  setCursorPosition,
+  getCursorPosition
 })
 </script>
 
@@ -158,10 +175,20 @@ defineExpose({
 
 .editor-stats {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
   font-size: 12px;
   color: #969799;
   padding: 0 4px;
+}
+
+.stats-left {
+  display: flex;
+  gap: 16px;
+}
+
+.stats-right {
+  margin-left: auto;
 }
 
 .editor-actions {

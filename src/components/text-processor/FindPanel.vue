@@ -20,8 +20,8 @@
     <div class="action-buttons">
       <van-button size="mini" @click="handlePrev" :disabled="!canNavigate">上一个</van-button>
       <van-button size="mini" type="primary" @click="handleNext" :disabled="!canNavigate">下一个</van-button>
-      <van-button size="mini" type="warning" @click="handleReplace" :disabled="!canReplace">替换</van-button>
-      <van-button size="mini" type="danger" @click="handleReplaceAll" :disabled="!canReplace">替换全部</van-button>
+      <van-button size="mini" type="warning" @click="handleReplace">替换</van-button>
+      <van-button size="mini" type="danger" @click="handleReplaceAll">替换全部</van-button>
     </div>
 
     <!-- 查找选项 -->
@@ -31,54 +31,51 @@
       <van-checkbox v-model="options.useRegex">正则表达式</van-checkbox>
     </div>
 
-    <!-- 查找结果 -->
-    <div v-if="showResult" class="find-result">
-      <div class="result-header">
-        <span class="result-count">找到 {{ result?.count || 0 }} 个匹配项</span>
-        <span v-if="result?.count && result.count > 0" class="current-index">
-          {{ currentIndex + 1 }} / {{ result.count }}
-        </span>
+    <!-- 替换历史 -->
+    <div v-if="replaceHistory.length > 0" class="replace-history">
+      <div class="history-header">
+        <span class="history-title">替换历史（最近 {{ replaceHistory.length }} 次）</span>
+        <van-button size="mini" @click="handleUndo" :disabled="replaceHistory.length === 0">撤销</van-button>
       </div>
-
-      <!-- 匹配项列表（暂时注释，后续可能会用） -->
-      <!-- <div v-if="result?.matches.length > 0" class="matches-list">
+      <div class="history-list">
         <div
-          v-for="(match, index) in result.matches"
-          :key="index"
-          :class="['match-item', { active: index === currentIndex }]"
-          @click="handleMatchClick(match, index)"
+          v-for="(item, index) in replaceHistory"
+          :key="item.id"
+          class="history-item"
         >
-          <div class="match-info">
-            <span class="match-position">行 {{ match.line }}，列 {{ match.column }}</span>
-            <span class="match-text">{{ match.text }}</span>
+          <span class="history-index">#{{ index + 1 }}</span>
+          <span class="history-time">{{ formatTime(item.timestamp) }}</span>
+          <div class="history-detail">
+            <span class="history-from">{{ truncateText(item.findText, 15) }}</span>
+            <span class="history-arrow">→</span>
+            <span class="history-to">{{ truncateText(item.replaceText, 15) }}</span>
           </div>
-          <div class="match-context">{{ match.context }}</div>
         </div>
       </div>
-
-      <div v-else class="no-matches">
-        <van-empty description="未找到匹配项" />
-      </div> -->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted, computed } from 'vue'
+import { showToast } from 'vant'
 import { findText, replaceText } from '@/utils/textProcessor'
-import type { FindResult, MatchItem, FindOptions } from '@/types/textProcessor'
+import type { FindResult, MatchItem, FindOptions, ReplaceHistoryItem } from '@/types/textProcessor'
 
 // Props
 interface Props {
   text: string
+  getCursorPosition?: () => number  // 获取光标位置的回调函数
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  getCursorPosition: () => -1
+})
 
 // Emits
 const emit = defineEmits<{
   (e: 'highlight', matches: MatchItem[]): void
-  (e: 'jump-to', match: MatchItem): void
+  (e: 'jump-to', match: MatchItem, index: number): void
   (e: 'replace', newText: string): void
 }>()
 
@@ -94,6 +91,9 @@ const options = ref<FindOptions>({
   wholeWord: false,
   useRegex: false
 })
+
+// 修改记录
+const replaceHistory = ref<ReplaceHistoryItem[]>([])
 
 // 是否可以导航
 const canNavigate = computed(() => {
@@ -145,9 +145,38 @@ const executeFind = () => {
   try {
     result.value = findText(props.text, keyword.value, options.value)
     showResult.value = true
-    // 重置当前索引
-    currentIndex.value = 0
     emit('highlight', result.value.matches)
+
+    // 聚焦到最近的匹配项
+    if (result.value.count > 0) {
+      // 获取当前光标位置
+      const cursorPosition = props.getCursorPosition()
+
+      if (cursorPosition > 0 && result.value.matches.length > 0) {
+        // 找到离当前光标最近的匹配项
+        let nearestIndex = 0
+        let nearestDistance = Math.abs(result.value.matches[0].index - cursorPosition)
+
+        for (let i = 1; i < result.value.matches.length; i++) {
+          const distance = Math.abs(result.value.matches[i].index - cursorPosition)
+          if (distance < nearestDistance) {
+            nearestDistance = distance
+            nearestIndex = i
+          }
+        }
+
+        currentIndex.value = nearestIndex
+      } else {
+        // 没有光标位置，默认聚焦第一个
+        currentIndex.value = 0
+      }
+
+      // 自动跳转到当前匹配的匹配项
+      const match = result.value.matches[currentIndex.value]
+      if (match) {
+        emit('jump-to', match, currentIndex.value)
+      }
+    }
   } catch (error) {
     result.value = null
     showResult.value = false
@@ -171,53 +200,94 @@ onUnmounted(() => {
   }
 })
 
-// 上一个匹配项
+// 上一个匹配项（支持循环）
 const handlePrev = () => {
-  if (currentIndex.value > 0) {
+  if (!result.value || result.value.count === 0) {
+    return
+  }
+
+  // 循环逻辑：如果在第一个，跳转到最后一个
+  if (currentIndex.value <= 0) {
+    currentIndex.value = result.value.count - 1
+  } else {
     currentIndex.value--
-    const match = result.value?.matches[currentIndex.value]
-    if (match) {
-      emit('jump-to', match)
-    }
+  }
+
+  const match = result.value.matches[currentIndex.value]
+  if (match) {
+    emit('jump-to', match, currentIndex.value)
   }
 }
 
-// 下一个匹配项
+// 下一个匹配项（支持循环）
 const handleNext = () => {
-  if (result.value && currentIndex.value < result.value.count - 1) {
+  if (!result.value || result.value.count === 0) {
+    return
+  }
+
+  // 循环逻辑：如果在最后一个，跳转到第一个
+  if (currentIndex.value >= result.value.count - 1) {
+    currentIndex.value = 0
+  } else {
     currentIndex.value++
-    const match = result.value.matches[currentIndex.value]
-    if (match) {
-      emit('jump-to', match)
-    }
+  }
+
+  const match = result.value.matches[currentIndex.value]
+  if (match) {
+    emit('jump-to', match, currentIndex.value)
   }
 }
 
 // 替换当前匹配项
 const handleReplace = () => {
-  if (!result.value || !canReplace.value) {
+  // 检查查找内容是否为空
+  if (!keyword.value.trim()) {
+    showToast('请输入查找内容')
     return
   }
 
-  // 执行替换（只替换第一个匹配项）
+  // 检查是否有匹配项
+  if (!result.value || result.value.count === 0) {
+    showToast('未找到匹配项')
+    return
+  }
+
+  // 获取当前选中的匹配项
+  const currentMatch = result.value.matches[currentIndex.value]
+  if (!currentMatch) {
+    return
+  }
+
+  // 执行替换（替换当前选中的匹配项）
   const resultObj = replaceText(props.text, {
     findText: keyword.value,
     replaceText: replaceTextValue.value,
     caseSensitive: options.value.caseSensitive,
     useRegex: options.value.useRegex,
-    replaceAll: false
+    replaceAll: false,
+    startIndex: currentMatch.index
   })
 
   if (resultObj.newText !== props.text) {
+    // 添加修改记录
+    addReplaceHistory(props.text, keyword.value, replaceTextValue.value)
     emit('replace', resultObj.newText)
-    // 重新查找
+    // 重新查找并保持当前位置
     debounceFind()
   }
 }
 
 // 替换全部匹配项
 const handleReplaceAll = () => {
-  if (!result.value || !canReplace.value) {
+  // 检查查找内容是否为空
+  if (!keyword.value.trim()) {
+    showToast('请输入查找内容')
+    return
+  }
+
+  // 检查是否有匹配项
+  if (!result.value || result.value.count === 0) {
+    showToast('未找到匹配项')
     return
   }
 
@@ -231,16 +301,60 @@ const handleReplaceAll = () => {
   })
 
   if (resultObj.newText !== props.text) {
+    // 添加修改记录
+    addReplaceHistory(props.text, keyword.value, replaceTextValue.value)
     emit('replace', resultObj.newText)
     // 重新查找
     debounceFind()
   }
 }
 
-// 点击匹配项
-const handleMatchClick = (match: MatchItem, index: number) => {
-  currentIndex.value = index
-  emit('jump-to', match)
+// 添加修改记录
+const addReplaceHistory = (originalText: string, findText: string, replaceText: string) => {
+  const item: ReplaceHistoryItem = {
+    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    originalText,
+    findText,
+    replaceText,
+    timestamp: Date.now()
+  }
+  // 插入到最前面
+  replaceHistory.value.unshift(item)
+  // 最多保留10条记录
+  if (replaceHistory.value.length > 10) {
+    replaceHistory.value.pop()
+  }
+}
+
+// 撤销操作
+const handleUndo = () => {
+  if (replaceHistory.value.length === 0) {
+    return
+  }
+  
+  // 获取最后一次操作的原始文本
+  const lastItem = replaceHistory.value[0]
+  emit('replace', lastItem.originalText)
+  
+  // 移除该记录
+  replaceHistory.value.shift()
+}
+
+// 截断文本
+const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) {
+    return text
+  }
+  return text.substring(0, maxLength) + '...'
+}
+
+// 格式化时间
+const formatTime = (timestamp: number): string => {
+  const date = new Date(timestamp)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  const seconds = date.getSeconds().toString().padStart(2, '0')
+  return `${hours}:${minutes}:${seconds}`
 }
 </script>
 
@@ -338,5 +452,85 @@ const handleMatchClick = (match: MatchItem, index: number) => {
 
 .no-matches {
   padding: 20px 0;
+}
+
+/* 替换历史样式 */
+.replace-history {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.history-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.history-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background-color: #f9fafb;
+  border-radius: 6px;
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-index {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.history-time {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.history-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.history-from {
+  font-size: 13px;
+  color: #ef4444;
+  font-family: monospace;
+  background-color: #fef2f2;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.history-arrow {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.history-to {
+  font-size: 13px;
+  color: #10b981;
+  font-family: monospace;
+  background-color: #f0fdf4;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 </style>

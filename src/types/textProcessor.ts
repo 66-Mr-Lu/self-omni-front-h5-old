@@ -20,6 +20,15 @@ export interface HistoryItem {
   data: any                     // 操作数据
 }
 
+// 修改记录
+export interface ReplaceHistoryItem {
+  id: string
+  originalText: string          // 替换前的完整文本（用于撤销）
+  findText: string              // 被替换的文本
+  replaceText: string           // 替换后的文本
+  timestamp: number             // 时间戳
+}
+
 // 查找结果
 export interface FindResult {
   count: number                 // 匹配数量
@@ -42,6 +51,7 @@ export interface ReplaceOperation {
   caseSensitive: boolean       // 大小写敏感
   useRegex: boolean             // 使用正则
   replaceAll: boolean           // 全部替换
+  startIndex?: number           // 开始替换的位置（用于替换单个匹配项）
 }
 
 // 计数结果
