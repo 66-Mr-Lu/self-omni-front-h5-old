@@ -8,6 +8,22 @@
       clearable
     />
 
+    <!-- 替换输入 -->
+    <van-field
+      v-model="replaceTextValue"
+      label="替换为"
+      placeholder="请输入替换内容"
+      clearable
+    />
+
+    <!-- 操作按钮 -->
+    <div class="action-buttons">
+      <van-button size="mini" @click="handlePrev" :disabled="!canNavigate">上一个</van-button>
+      <van-button size="mini" type="primary" @click="handleNext" :disabled="!canNavigate">下一个</van-button>
+      <van-button size="mini" type="warning" @click="handleReplace" :disabled="!canReplace">替换</van-button>
+      <van-button size="mini" type="danger" @click="handleReplaceAll" :disabled="!canReplace">替换全部</van-button>
+    </div>
+
     <!-- 查找选项 -->
     <div class="find-options">
       <van-checkbox v-model="options.caseSensitive">大小写敏感</van-checkbox>
@@ -15,24 +31,22 @@
       <van-checkbox v-model="options.useRegex">正则表达式</van-checkbox>
     </div>
 
-    <!-- 查找按钮 -->
-    <van-button type="primary" block @click="handleFind" :disabled="!keyword.trim()">
-      查找
-    </van-button>
-
     <!-- 查找结果 -->
-    <div v-if="result" class="find-result">
+    <div v-if="showResult" class="find-result">
       <div class="result-header">
-        <span class="result-count">找到 {{ result.count }} 个匹配项</span>
+        <span class="result-count">找到 {{ result?.count || 0 }} 个匹配项</span>
+        <span v-if="result?.count && result.count > 0" class="current-index">
+          {{ currentIndex + 1 }} / {{ result.count }}
+        </span>
       </div>
 
       <!-- 匹配项列表 -->
-      <div v-if="result.matches.length > 0" class="matches-list">
+      <div v-if="result?.matches.length > 0" class="matches-list">
         <div
           v-for="(match, index) in result.matches"
           :key="index"
-          class="match-item"
-          @click="handleMatchClick(match)"
+          :class="['match-item', { active: index === currentIndex }]"
+          @click="handleMatchClick(match, index)"
         >
           <div class="match-info">
             <span class="match-position">行 {{ match.line }}，列 {{ match.column }}</span>
@@ -51,9 +65,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { showToast } from 'vant'
-import { findText } from '@/utils/textProcessor'
+import { ref, watch, onUnmounted, computed } from 'vue'
+import { findText, replaceText } from '@/utils/textProcessor'
 import type { FindResult, MatchItem, FindOptions } from '@/types/textProcessor'
 
 // Props
@@ -67,10 +80,14 @@ const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: 'highlight', matches: MatchItem[]): void
   (e: 'jump-to', match: MatchItem): void
+  (e: 'replace', newText: string): void
 }>()
 
 // 查找关键字
 const keyword = ref('')
+
+// 替换文本
+const replaceTextValue = ref('')
 
 // 查找选项
 const options = ref<FindOptions>({
@@ -79,47 +96,151 @@ const options = ref<FindOptions>({
   useRegex: false
 })
 
-// 监听 keyword 变化，当清空时清除结果和高亮
-watch(keyword, (newKeyword) => {
-  if (!newKeyword.trim()) {
-    result.value = null
-    emit('highlight', [])
-  }
+// 是否可以导航
+const canNavigate = computed(() => {
+  return showResult.value && result.value && result.value.count > 0
+})
+
+// 是否可以替换
+const canReplace = computed(() => {
+  return canNavigate.value && replaceTextValue.value.trim() !== ''
 })
 
 // 查找结果
 const result = ref<FindResult | null>(null)
 
-// 执行查找
-const handleFind = () => {
-  if (!props.text.trim()) {
-    showToast('请先输入文本')
-    return
+// 是否显示结果
+const showResult = ref(false)
+
+// 当前匹配项索引
+const currentIndex = ref(0)
+
+// 防抖定时器
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * 防抖执行查找
+ */
+const debounceFind = () => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
   }
 
+  debounceTimer = setTimeout(() => {
+    executeFind()
+  }, 300)
+}
+
+/**
+ * 执行查找逻辑
+ */
+const executeFind = () => {
+  // 如果没有关键字，隐藏结果并清除高亮
   if (!keyword.value.trim()) {
-    showToast('请输入查找内容')
+    showResult.value = false
+    result.value = null
+    emit('highlight', [])
     return
   }
 
   try {
     result.value = findText(props.text, keyword.value, options.value)
-
-    if (result.value.count > 0) {
-      showToast(`找到 ${result.value.count} 个匹配项`)
-      emit('highlight', result.value.matches)
-    } else {
-      showToast('未找到匹配项')
-      emit('highlight', [])
-    }
+    showResult.value = true
+    // 重置当前索引
+    currentIndex.value = 0
+    emit('highlight', result.value.matches)
   } catch (error) {
-    showToast('查找失败，请检查输入')
     result.value = null
+    showResult.value = false
+    emit('highlight', [])
+  }
+}
+
+// 监听关键字变化，自动触发查找（带防抖）
+watch(keyword, debounceFind)
+
+// 监听选项变化，自动触发查找（带防抖）
+watch(options, debounceFind, { deep: true })
+
+// 监听文本变化，自动触发查找（带防抖）
+watch(() => props.text, debounceFind)
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+})
+
+// 上一个匹配项
+const handlePrev = () => {
+  if (currentIndex.value > 0) {
+    currentIndex.value--
+    const match = result.value?.matches[currentIndex.value]
+    if (match) {
+      emit('jump-to', match)
+    }
+  }
+}
+
+// 下一个匹配项
+const handleNext = () => {
+  if (result.value && currentIndex.value < result.value.count - 1) {
+    currentIndex.value++
+    const match = result.value.matches[currentIndex.value]
+    if (match) {
+      emit('jump-to', match)
+    }
+  }
+}
+
+// 替换当前匹配项
+const handleReplace = () => {
+  if (!result.value || !canReplace.value) {
+    return
+  }
+
+  // 执行替换（只替换第一个匹配项）
+  const resultObj = replaceText(props.text, {
+    findText: keyword.value,
+    replaceText: replaceTextValue.value,
+    caseSensitive: options.value.caseSensitive,
+    useRegex: options.value.useRegex,
+    replaceAll: false
+  })
+
+  if (resultObj.newText !== props.text) {
+    emit('replace', resultObj.newText)
+    // 重新查找
+    debounceFind()
+  }
+}
+
+// 替换全部匹配项
+const handleReplaceAll = () => {
+  if (!result.value || !canReplace.value) {
+    return
+  }
+
+  // 执行替换全部
+  const resultObj = replaceText(props.text, {
+    findText: keyword.value,
+    replaceText: replaceTextValue.value,
+    caseSensitive: options.value.caseSensitive,
+    useRegex: options.value.useRegex,
+    replaceAll: true
+  })
+
+  if (resultObj.newText !== props.text) {
+    emit('replace', resultObj.newText)
+    // 重新查找
+    debounceFind()
   }
 }
 
 // 点击匹配项
-const handleMatchClick = (match: MatchItem) => {
+const handleMatchClick = (match: MatchItem, index: number) => {
+  currentIndex.value = index
   emit('jump-to', match)
 }
 </script>
@@ -142,6 +263,9 @@ const handleMatchClick = (match: MatchItem) => {
 }
 
 .result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px 0;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -150,6 +274,22 @@ const handleMatchClick = (match: MatchItem) => {
   font-size: 14px;
   font-weight: 500;
   color: #1989fa;
+}
+
+.current-index {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.action-buttons :deep(.van-button) {
+  flex: 1;
+  min-width: 60px;
 }
 
 .matches-list {
@@ -166,6 +306,11 @@ const handleMatchClick = (match: MatchItem) => {
 
 .match-item:hover {
   background-color: #f9fafb;
+}
+
+.match-item.active {
+  background-color: #e0f2fe;
+  border-left: 3px solid #1989fa;
 }
 
 .match-info {

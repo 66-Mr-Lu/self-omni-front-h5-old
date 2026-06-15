@@ -14,20 +14,15 @@
       <van-checkbox v-model="options.useRegex">正则表达式</van-checkbox>
     </div>
 
-    <!-- 计数按钮 -->
-    <van-button type="primary" block @click="handleCount" :disabled="!keyword.trim()">
-      计数
-    </van-button>
-
     <!-- 计数结果 -->
-    <div v-if="result" class="count-result">
+    <div v-if="showResult" class="count-result">
       <div class="result-header">
-        <span class="result-count">找到 {{ result.count }} 个匹配项</span>
+        <span class="result-count">找到 {{ result?.count || 0 }} 个匹配项</span>
         <van-button size="small" @click="handleExport">导出结果</van-button>
       </div>
 
       <!-- 匹配位置列表 -->
-      <div v-if="result.positions.length > 0" class="positions-list">
+      <div v-if="result?.positions.length > 0" class="positions-list">
         <div
           v-for="(position, index) in result.positions"
           :key="index"
@@ -52,8 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { showToast, showSuccessToast } from 'vant'
+import { ref, watch, onUnmounted } from 'vue'
+import { showSuccessToast } from 'vant'
 import { countKeyword } from '@/utils/textProcessor'
 import type { CountResult, MatchItem, CountOptions } from '@/types/textProcessor'
 
@@ -81,31 +76,62 @@ const options = ref<CountOptions>({
 // 计数结果
 const result = ref<CountResult | null>(null)
 
-// 执行计数
-const handleCount = () => {
-  if (!props.text.trim()) {
-    showToast('请先输入文本')
-    return
+// 是否显示结果
+const showResult = ref(false)
+
+// 防抖定时器
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * 防抖执行计数
+ */
+const debounceCount = () => {
+  // 清除之前的定时器
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
   }
 
+  // 设置新的定时器，300ms后执行计数
+  debounceTimer = setTimeout(() => {
+    executeCount()
+  }, 300)
+}
+
+/**
+ * 执行计数逻辑
+ */
+const executeCount = () => {
+  // 如果没有关键字，隐藏结果
   if (!keyword.value.trim()) {
-    showToast('请输入关键字')
+    showResult.value = false
+    result.value = null
     return
   }
 
   try {
     result.value = countKeyword(props.text, keyword.value, options.value)
-
-    if (result.value.count > 0) {
-      showToast(`找到 ${result.value.count} 个匹配项`)
-    } else {
-      showToast('未找到匹配项')
-    }
+    showResult.value = true
   } catch (error) {
-    showToast('计数失败，请检查输入')
     result.value = null
+    showResult.value = false
   }
 }
+
+// 监听关键字变化，自动触发计数（带防抖）
+watch(keyword, debounceCount)
+
+// 监听选项变化，自动触发计数（带防抖）
+watch(options, debounceCount, { deep: true })
+
+// 监听文本变化，自动触发计数（带防抖）
+watch(() => props.text, debounceCount)
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer)
+  }
+})
 
 // 导出结果
 const handleExport = () => {

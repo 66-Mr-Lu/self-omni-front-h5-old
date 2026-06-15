@@ -22,20 +22,7 @@
             :text="text"
             @highlight="handleHighlight"
             @jump-to="handleJumpTo"
-          />
-        </van-tab>
-
-        <van-tab title="替换">
-          <ReplacePanel
-            :text="text"
             @replace="handleReplace"
-          />
-        </van-tab>
-
-        <van-tab title="计数">
-          <CountPanel
-            :text="text"
-            @jump-to="handleJumpTo"
           />
         </van-tab>
 
@@ -56,10 +43,8 @@ import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import TextEditor from '@/components/text-processor/TextEditor.vue'
 import FindPanel from '@/components/text-processor/FindPanel.vue'
-import ReplacePanel from '@/components/text-processor/ReplacePanel.vue'
-import CountPanel from '@/components/text-processor/CountPanel.vue'
 import ToolsPanel from '@/components/text-processor/ToolsPanel.vue'
-import type { MatchItem, TabType } from '@/types/textProcessor'
+import type { MatchItem } from '@/types/textProcessor'
 
 // 路由
 const router = useRouter()

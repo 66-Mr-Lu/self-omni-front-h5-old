@@ -149,11 +149,17 @@ export function replaceText(
 
   try {
     if (operation.useRegex) {
-      const flags = operation.caseSensitive ? 'g' : 'gi'
+      // 根据是否替换全部决定是否使用全局标志
+      const flags = operation.caseSensitive 
+        ? (operation.replaceAll ? 'g' : '') 
+        : (operation.replaceAll ? 'gi' : 'i')
       regex = new RegExp(operation.findText, flags)
     } else {
       const escaped = escapeRegExp(operation.findText)
-      const flags = operation.caseSensitive ? 'g' : 'gi'
+      // 根据是否替换全部决定是否使用全局标志
+      const flags = operation.caseSensitive 
+        ? (operation.replaceAll ? 'g' : '') 
+        : (operation.replaceAll ? 'gi' : 'i')
       regex = new RegExp(escaped, flags)
     }
   } catch (error) {
@@ -169,8 +175,7 @@ export function replaceText(
   } else {
     // 只替换第一个匹配项
     const newText = text.replace(regex, operation.replaceText)
-    const matches = text.match(regex)
-    const count = matches ? 1 : 0
+    const count = text.match(regex) ? 1 : 0
     return { newText, replaceCount: count }
   }
 }
