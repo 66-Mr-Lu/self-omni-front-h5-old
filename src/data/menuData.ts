@@ -173,6 +173,16 @@ export const menuData: TopCategory[] = [
         routePath: '/tools/cron-expression',
         desc: 'Cron表达式生成器和验证工具',
         tags: ['Cron', '定时任务', '表达式', '调度', '计划']
+      },
+      { 
+        id: 'subscription-convert', 
+        name: '订阅转换', 
+        icon: '🔗', 
+        action: 'subscriptionConvert', 
+        priority: 30, 
+        routePath: '/tools/subscription-convert',
+        desc: '订阅链接与配置文件转换',
+        tags: ['订阅', '转换', '代理', 'Clash', 'V2Ray', 'Surge', 'Shadowrocket']
       }
     ],
     // 二级菜单组
