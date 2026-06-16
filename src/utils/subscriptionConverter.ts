@@ -36,27 +36,72 @@ export const linkFormatOptions: { label: string; value: LinkType; desc: string }
 ]
 
 /**
+ * Base64 URL安全解码
+ */
+const base64UrlDecode = (str: string): string => {
+  // 替换URL安全的字符
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
+  // 添加填充
+  while (base64.length % 4 !== 0) {
+    base64 += '='
+  }
+  return atob(base64)
+}
+
+/**
  * 解析 Shadowsocks 链接
  * 格式: ss://base64(method:password@server:port)#remarks
+ * 或新格式: ss://base64(method:password)@server:port#remarks
  */
 export const parseSSLink = (link: string): ProxyNode | null => {
   try {
-    const match = link.match(/^ss:\/\/([A-Za-z0-9+/=]+)(?:#(.+))?$/)
-    if (!match) return null
-
-    const base64Content = match[1]
-    const remarks = match[2] ? decodeURIComponent(match[2]) : ''
+    // 移除前缀
+    const withoutPrefix = link.substring(5) // 去掉 'ss://'
+    
+    // 分离备注部分
+    const hashIndex = withoutPrefix.indexOf('#')
+    const base64Part = hashIndex > -1 ? withoutPrefix.substring(0, hashIndex) : withoutPrefix
+    const remarks = hashIndex > -1 ? decodeURIComponent(withoutPrefix.substring(hashIndex + 1)) : ''
     
     // Base64 解码
-    const decoded = atob(base64Content)
-    const parts = decoded.split(':')
+    const decoded = base64UrlDecode(base64Part)
     
-    if (parts.length < 4) return null
-
-    const [method, password, server, portStr] = parts
+    // 尝试解析新格式: method:password@server:port
+    let method: string, password: string, server: string, portStr: string
+    
+    const atIndex = decoded.lastIndexOf('@')
+    if (atIndex > -1) {
+      // 新格式
+      const userInfo = decoded.substring(0, atIndex)
+      const hostInfo = decoded.substring(atIndex + 1)
+      
+      const colonIndex = userInfo.indexOf(':')
+      if (colonIndex === -1) return null
+      
+      method = userInfo.substring(0, colonIndex)
+      password = userInfo.substring(colonIndex + 1)
+      
+      const lastColonIndex = hostInfo.lastIndexOf(':')
+      if (lastColonIndex === -1) return null
+      
+      server = hostInfo.substring(0, lastColonIndex)
+      portStr = hostInfo.substring(lastColonIndex + 1)
+    } else {
+      // 旧格式: method:password:server:port
+      const parts = decoded.split(':')
+      if (parts.length < 4) return null
+      
+      method = parts[0]
+      password = parts[1]
+      server = parts[2]
+      portStr = parts[3]
+    }
+    
     const port = parseInt(portStr, 10)
-
-    if (isNaN(port)) return null
+    if (isNaN(port) || port <= 0 || port > 65535) return null
+    
+    // 验证必要字段
+    if (!method || !password || !server) return null
 
     return {
       id: generateId(),
@@ -79,34 +124,55 @@ export const parseSSLink = (link: string): ProxyNode | null => {
  */
 export const parseSSRLink = (link: string): ProxyNode | null => {
   try {
-    const match = link.match(/^ssr:\/\/([A-Za-z0-9+/=]+)$/)
+    const match = link.match(/^ssr:\/\/(.+)$/)
     if (!match) return null
 
     const base64Content = match[1]
-    const decoded = atob(base64Content)
+    const decoded = base64UrlDecode(base64Content)
     
-    // 解析基础部分
-    const [serverPort, protocol, method, obfs, passwordB64] = decoded.split('/?')[0].split(':')
+    // 分离基础部分和参数部分
+    const questionMarkIndex = decoded.indexOf('/?')
+    const basePart = questionMarkIndex > -1 ? decoded.substring(0, questionMarkIndex) : decoded
+    const paramsPart = questionMarkIndex > -1 ? decoded.substring(questionMarkIndex + 2) : ''
     
-    const [server, portStr] = serverPort.split(':')
+    // 解析基础部分: server:port:protocol:method:obfs:password
+    const parts = basePart.split(':')
+    if (parts.length < 6) return null
+    
+    const server = parts[0]
+    const portStr = parts[1]
+    const protocol = parts[2]
+    const method = parts[3]
+    const obfs = parts[4]
+    const passwordB64 = parts[5]
+    
     const port = parseInt(portStr, 10)
-    const password = atob(passwordB64)
-
-    if (isNaN(port)) return null
+    if (isNaN(port) || port <= 0 || port > 65535) return null
+    
+    // 解码密码
+    let password: string
+    try {
+      password = base64UrlDecode(passwordB64)
+    } catch {
+      password = passwordB64
+    }
 
     // 解析参数部分
-    const paramsPart = decoded.split('/?')[1] || ''
     const params: Record<string, string> = {}
     if (paramsPart) {
       paramsPart.split('&').forEach(param => {
         const [key, value] = param.split('=')
         if (key && value) {
-          params[key] = decodeURIComponent(value)
+          try {
+            params[key] = base64UrlDecode(value)
+          } catch {
+            params[key] = decodeURIComponent(value)
+          }
         }
       })
     }
 
-    const remarks = params.remarks ? atob(params.remarks) : ''
+    const remarks = params.remarks || ''
 
     return {
       id: generateId(),
@@ -134,26 +200,32 @@ export const parseSSRLink = (link: string): ProxyNode | null => {
  */
 export const parseVMessLink = (link: string): ProxyNode | null => {
   try {
-    const match = link.match(/^vmess:\/\/([A-Za-z0-9+/=]+)$/)
+    const match = link.match(/^vmess:\/\/(.+)$/)
     if (!match) return null
 
     const base64Content = match[1]
-    const decoded = atob(base64Content)
+    const decoded = base64UrlDecode(base64Content)
     const json = JSON.parse(decoded)
+
+    // 验证必要字段
+    if (!json.add || !json.port || !json.id) return null
+
+    const port = typeof json.port === 'string' ? parseInt(json.port, 10) : json.port
+    if (isNaN(port) || port <= 0 || port > 65535) return null
 
     return {
       id: generateId(),
-      name: json.ps || json.remarks || `${json.add}:${json.port}`,
+      name: json.ps || json.remarks || `${json.add}:${port}`,
       type: 'vmess',
       server: json.add || '',
-      port: parseInt(json.port, 10) || 0,
+      port,
       uuid: json.id || '',
-      alterId: parseInt(json.aid, 10) || 0,
+      alterId: json.aid ? parseInt(json.aid, 10) || 0 : 0,
       cipher: json.scy || 'auto',
       security: json.security || 'auto',
-      network: json.net || '',
+      network: json.net || 'tcp',
       path: json.path || '',
-      sni: json.sni || '',
+      sni: json.sni || json.host || '',
       remarks: json.ps || json.remarks || ''
     }
   } catch {
@@ -167,13 +239,31 @@ export const parseVMessLink = (link: string): ProxyNode | null => {
  */
 export const parseTrojanLink = (link: string): ProxyNode | null => {
   try {
-    const url = new URL(link)
-    if (url.protocol !== 'trojan:') return null
-
-    const password = url.username
-    const server = url.hostname
-    const port = parseInt(url.port, 10) || 443
-    const remarks = url.hash ? decodeURIComponent(url.hash.slice(1)) : ''
+    // 手动解析 URL，避免 URL 构造函数的问题
+    const withoutPrefix = link.substring(9) // 去掉 'trojan://'
+    
+    // 分离备注部分
+    const hashIndex = withoutPrefix.indexOf('#')
+    const mainPart = hashIndex > -1 ? withoutPrefix.substring(0, hashIndex) : withoutPrefix
+    const remarks = hashIndex > -1 ? decodeURIComponent(withoutPrefix.substring(hashIndex + 1)) : ''
+    
+    // 分离密码和服务器信息
+    const atIndex = mainPart.indexOf('@')
+    if (atIndex === -1) return null
+    
+    const password = mainPart.substring(0, atIndex)
+    const serverInfo = mainPart.substring(atIndex + 1)
+    
+    // 分离服务器和端口
+    const lastColonIndex = serverInfo.lastIndexOf(':')
+    if (lastColonIndex === -1) return null
+    
+    const server = serverInfo.substring(0, lastColonIndex)
+    const portStr = serverInfo.substring(lastColonIndex + 1)
+    const port = portStr ? parseInt(portStr, 10) : 443
+    
+    if (isNaN(port) || port <= 0 || port > 65535) return null
+    if (!server || !password) return null
 
     return {
       id: generateId(),
@@ -182,7 +272,7 @@ export const parseTrojanLink = (link: string): ProxyNode | null => {
       server,
       port,
       password,
-      sni: url.searchParams.get('sni') || '',
+      sni: '',
       remarks
     }
   } catch {
@@ -227,18 +317,23 @@ export const parseLink = (link: string): ProxyNode | null => {
  */
 export const extractLinksFromContent = (content: string): string[] => {
   const patterns = [
-    /ss:\/\/[A-Za-z0-9+/=]+(?:#[^\s]*)?/g,
-    /ssr:\/\/[A-Za-z0-9+/=]+/g,
-    /vmess:\/\/[A-Za-z0-9+/=]+/g,
-    /trojan:\/\/[^\s]+/g
+    /ss:\/\/[^\s]+/gi,
+    /ssr:\/\/[^\s]+/gi,
+    /vmess:\/\/[^\s]+/gi,
+    /trojan:\/\/[^\s]+/gi
   ]
 
   const links: string[] = []
+  const seen = new Set<string>()
+  
   patterns.forEach(pattern => {
     const matches = content.match(pattern) || []
     matches.forEach(link => {
-      if (!links.includes(link)) {
-        links.push(link)
+      // 清理可能的尾部标点符号
+      const cleanLink = link.replace(/[.,;!?)]+$/, '')
+      if (!seen.has(cleanLink)) {
+        seen.add(cleanLink)
+        links.push(cleanLink)
       }
     })
   })
