@@ -9,6 +9,14 @@
         </div>
         <!-- 右侧按钮组 -->
         <div class="flex items-center space-x-3">
+          <!-- 全屏按钮 -->
+          <button
+            @click="toggleFullscreen"
+            class="w-9 h-9 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-opacity"
+          >
+            <span class="text-white text-lg">{{ isFullscreen ? '⛶' : '⛶' }}</span>
+          </button>
+          
           <!-- 搜索按钮 -->
           <button
             @click="showSearch = true"
@@ -118,6 +126,9 @@ const showSearch = ref(false)
 // 用户菜单显示状态
 const showUserMenu = ref(false)
 
+// 全屏状态
+const isFullscreen = ref(false)
+
 // 当前用户信息
 const currentUser = computed(() => appStore.getUser())
 
@@ -187,6 +198,40 @@ const handleLogout = () => {
     // 用户点击取消，不做任何操作
   })
 }
+
+/**
+ * 切换全屏模式
+ */
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    // 进入全屏
+    document.documentElement.requestFullscreen().then(() => {
+      isFullscreen.value = true
+    }).catch((err) => {
+      console.error('进入全屏失败:', err)
+      showToast({
+        message: '进入全屏失败',
+        position: 'top'
+      })
+    })
+  } else {
+    // 退出全屏
+    document.exitFullscreen().then(() => {
+      isFullscreen.value = false
+    }).catch((err) => {
+      console.error('退出全屏失败:', err)
+      showToast({
+        message: '退出全屏失败',
+        position: 'top'
+      })
+    })
+  }
+}
+
+// 监听全屏状态变化
+document.addEventListener('fullscreenchange', () => {
+  isFullscreen.value = !!document.fullscreenElement
+})
 </script>
 
 <style scoped>
