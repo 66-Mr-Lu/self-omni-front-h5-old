@@ -12,6 +12,7 @@ const FeaturePage = () => import('@/views/feature/index.vue')
 const JsonEscapeConvertPage = () => import('@/views/tools/json-escape-convert.vue')
 const TextProcessorPage = () => import('@/views/tools/text-processor.vue')
 const UnicodeConvertPage = () => import('@/views/tools/unicode-convert.vue')
+const CronExpressionPage = () => import('@/views/tools/cron-expression.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
 // 登录页面（懒加载）
@@ -104,6 +105,12 @@ const routes: RouteRecordRaw[] = [
         path: 'tools/unicode-convert',
         name: 'UnicodeConvert',
         component: UnicodeConvertPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/cron-expression',
+        name: 'CronExpression',
+        component: CronExpressionPage,
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {

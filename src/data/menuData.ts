@@ -163,6 +163,16 @@ export const menuData: TopCategory[] = [
         routePath: '/tools/text-processor',
         desc: '强大的文本处理工具，支持查找、替换、格式化',
         tags: ['文本', '查找', '替换', '格式化', '编辑']
+      },
+      { 
+        id: 'cron-expression', 
+        name: 'Cron表达式', 
+        icon: '⏰', 
+        action: 'cronExpression', 
+        priority: 25, 
+        routePath: '/tools/cron-expression',
+        desc: 'Cron表达式生成器和验证工具',
+        tags: ['Cron', '定时任务', '表达式', '调度', '计划']
       }
     ],
     // 二级菜单组
