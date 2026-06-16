@@ -50,6 +50,7 @@ instance.interceptors.response.use(
         showDialog({
           title: '提示',
           message: '您还未登录，是否进行登录操作？',
+          showCancelButton: true,
           confirmButtonText: '去登录',
           cancelButtonText: '取消'
         }).then(() => {
@@ -86,6 +87,7 @@ instance.interceptors.response.use(
         showDialog({
           title: '提示',
           message: '您还未登录，是否进行登录操作？',
+          showCancelButton: true,
           confirmButtonText: '去登录',
           cancelButtonText: '取消'
         }).then(() => {
