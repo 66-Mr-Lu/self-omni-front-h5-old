@@ -11,7 +11,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="content pt-16 px-4 pb-4">
+    <div class="content pt-4 px-4 pb-4">
       <!-- Cron表达式显示区域 -->
       <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
         <label class="text-gray-700 font-medium text-sm block mb-2">Cron表达式</label>
