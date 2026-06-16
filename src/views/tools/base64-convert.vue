@@ -15,8 +15,8 @@
       <!-- 模式切换 -->
       <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
         <van-radio-group v-model="mode" direction="horizontal" class="w-full">
-          <van-radio name="encode" shape="button">编码 (Encode)</van-radio>
-          <van-radio name="decode" shape="button">解码 (Decode)</van-radio>
+          <van-radio name="encode">编码 (Encode)</van-radio>
+          <van-radio name="decode">解码 (Decode)</van-radio>
         </van-radio-group>
       </div>
 

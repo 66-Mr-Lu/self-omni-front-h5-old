@@ -101,9 +101,9 @@ const canNavigate = computed(() => {
 })
 
 // 是否可以替换
-const canReplace = computed(() => {
-  return canNavigate.value && replaceTextValue.value.trim() !== ''
-})
+// const canReplace = computed(() => {
+//   return canNavigate.value && replaceTextValue.value.trim() !== ''
+// })
 
 // 查找结果
 const result = ref<FindResult | null>(null)

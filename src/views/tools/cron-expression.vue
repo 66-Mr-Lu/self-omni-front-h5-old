@@ -604,7 +604,7 @@ const parseCronExpression = () => {
 // 解析单个字段
 const parseField = (
   value: string,
-  max: number,
+  _max: number, // 下划线开头的变量名是一种约定，表示该参数是有意未使用的
   callback: (type: string, interval: number, from: number, interval2: number, specific: number[]) => void
 ) => {
   if (value === '*') {

@@ -177,7 +177,7 @@ export function replaceText(
     const substring = text.substring(operation.startIndex)
     const match = substring.match(regex)
     
-    if (match) {
+    if (match && match.index !== undefined) {
       const matchIndex = operation.startIndex + match.index
       const newText = text.substring(0, matchIndex) + 
                       operation.replaceText + 

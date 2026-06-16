@@ -22,7 +22,7 @@
       </div>
 
       <!-- 匹配位置列表 -->
-      <div v-if="result?.positions.length > 0" class="positions-list">
+      <div v-if="result?.positions && result.positions.length > 0" class="positions-list">
         <div
           v-for="(position, index) in result.positions"
           :key="index"
