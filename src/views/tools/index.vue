@@ -83,6 +83,12 @@ const handleChildClick = (item: LeafMenu) => {
     return
   }
   
+  // Base64编解码功能跳转到对应的页面
+  if (item.action === 'base64Convert' && item.routePath) {
+    router.push(item.routePath)
+    return
+  }
+  
   // 使用 Vant showDialog 函数弹出提示
   showDialog({
     title: '提示',

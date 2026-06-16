@@ -183,6 +183,16 @@ export const menuData: TopCategory[] = [
         routePath: '/tools/subscription-convert',
         desc: '订阅链接与配置文件转换',
         tags: ['订阅', '转换', '代理', 'Clash', 'V2Ray', 'Surge', 'Shadowrocket']
+      },
+      { 
+        id: 'base64-convert', 
+        name: 'Base64编解码', 
+        icon: '🔐', 
+        action: 'base64Convert', 
+        priority: 35, 
+        routePath: '/tools/base64-convert',
+        desc: 'Base64编码与解码转换工具',
+        tags: ['Base64', '编码', '解码', '转换', '加密']
       }
     ],
     // 二级菜单组

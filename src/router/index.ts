@@ -14,6 +14,7 @@ const TextProcessorPage = () => import('@/views/tools/text-processor.vue')
 const UnicodeConvertPage = () => import('@/views/tools/unicode-convert.vue')
 const CronExpressionPage = () => import('@/views/tools/cron-expression.vue')
 const SubscriptionConvertPage = () => import('@/views/tools/subscription-convert.vue')
+const Base64ConvertPage = () => import('@/views/tools/base64-convert.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
 // 登录页面（懒加载）
@@ -118,6 +119,12 @@ const routes: RouteRecordRaw[] = [
         path: 'tools/subscription-convert',
         name: 'SubscriptionConvert',
         component: SubscriptionConvertPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/base64-convert',
+        name: 'Base64Convert',
+        component: Base64ConvertPage,
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {
