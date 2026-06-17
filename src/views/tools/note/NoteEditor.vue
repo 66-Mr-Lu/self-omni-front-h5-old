@@ -261,6 +261,8 @@ const saveNote = async () => {
 
 // 页面加载时初始化
 onMounted(() => {
+  // 强制滚动到页面顶部，避免从列表页面滚动后进入编辑页面时位置偏移
+  window.scrollTo(0, 0)
   
   // 判断是编辑还是创建
   const path = route.path
