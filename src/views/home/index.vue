@@ -2,7 +2,15 @@
   <div class="home-page min-h-screen bg-gray-100 pb-20">
     <!-- 顶部导航栏 -->
     <div class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
-      <div class="flex items-center justify-between px-5 h-12">
+      <!-- 子页面导航栏样式 -->
+      <div v-if="showBackButton" class="flex items-center px-5 h-12">
+        <div class="back-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="goBack">
+          <span class="text-white text-2xl">‹</span>
+        </div>
+        <h1 class="text-white text-lg font-semibold mx-3">{{ currentPageTitle }}</h1>
+      </div>
+      <!-- 首页导航栏样式 -->
+      <div v-else class="flex items-center justify-between px-5 h-12">
         <div>
           <h1 class="text-white text-lg font-semibold">{{ appStore.appName }}</h1>
           <p class="text-white text-opacity-80 text-xs">{{ appStore.greeting }}👋</p>
@@ -108,7 +116,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import BottomTab from '@/components/BottomTab.vue'
 import SearchMenu from '@/components/SearchMenu.vue'
@@ -116,6 +124,7 @@ import { showToast, showDialog } from 'vant'
 
 // 路由
 const router = useRouter()
+const route = useRoute()
 
 // 状态管理
 const appStore = useAppStore()
@@ -131,6 +140,60 @@ const isFullscreen = ref(false)
 
 // 当前用户信息
 const currentUser = computed(() => appStore.getUser())
+
+// 是否显示返回按钮（在子页面显示）
+const showBackButton = computed(() => {
+  // 定义需要显示返回按钮的路由路径
+  const subPagePaths = [
+    '/tools/note',
+    '/tools/json-escape-convert',
+    '/tools/text-processor',
+    '/tools/unicode-convert',
+    '/tools/cron-expression',
+    '/tools/subscription-convert',
+    '/tools/base64-convert',
+    '/download/bilibili',
+    '/profile',
+    '/profile/edit'
+  ]
+  
+  // 检查当前路由是否匹配
+  return subPagePaths.some(path => route.path.startsWith(path))
+})
+
+// 当前页面标题
+const currentPageTitle = computed(() => {
+  const titleMap: Record<string, string> = {
+    '/tools/note': '记事本',
+    '/tools/note/create': '新建笔记',
+    '/tools/note/edit': '编辑笔记',
+    '/tools/json-escape-convert': 'JSON转义转换',
+    '/tools/text-processor': '文本处理',
+    '/tools/unicode-convert': 'Unicode编解码',
+    '/tools/cron-expression': 'Cron表达式生成器',
+    '/tools/subscription-convert': '订阅转换',
+    '/tools/base64-convert': 'Base64编解码',
+    '/download/bilibili': 'B站视频下载',
+    '/profile': '个人中心',
+    '/profile/edit': '编辑资料'
+  }
+  
+  // 查找匹配的标题
+  for (const [path, title] of Object.entries(titleMap)) {
+    if (route.path.startsWith(path)) {
+      return title
+    }
+  }
+  
+  return '页面'
+})
+
+/**
+ * 返回上一页
+ */
+const goBack = () => {
+  window.history.back()
+}
 
 /**
  * 处理个人中心点击

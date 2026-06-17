@@ -15,6 +15,8 @@ const UnicodeConvertPage = () => import('@/views/tools/unicode-convert.vue')
 const CronExpressionPage = () => import('@/views/tools/cron-expression.vue')
 const SubscriptionConvertPage = () => import('@/views/tools/subscription-convert.vue')
 const Base64ConvertPage = () => import('@/views/tools/base64-convert.vue')
+const NoteListPage = () => import('@/views/tools/note/NoteList.vue')
+const NoteEditorPage = () => import('@/views/tools/note/NoteEditor.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
 
 // 登录页面（懒加载）
@@ -125,6 +127,24 @@ const routes: RouteRecordRaw[] = [
         path: 'tools/base64-convert',
         name: 'Base64Convert',
         component: Base64ConvertPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/note',
+        name: 'NoteList',
+        component: NoteListPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/note/create',
+        name: 'NoteCreate',
+        component: NoteEditorPage,
+        meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      {
+        path: 'tools/note/edit/:id',
+        name: 'NoteEdit',
+        component: NoteEditorPage,
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {

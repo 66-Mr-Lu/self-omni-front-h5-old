@@ -193,6 +193,16 @@ export const menuData: TopCategory[] = [
         routePath: '/tools/base64-convert',
         desc: 'Base64编码与解码转换工具',
         tags: ['Base64', '编码', '解码', '转换', '加密']
+      },
+      { 
+        id: 'note', 
+        name: '记事本', 
+        icon: '📒', 
+        action: 'note', 
+        priority: 40, 
+        routePath: '/tools/note',
+        desc: '个人记事本，数据存储在云端',
+        tags: ['笔记', '记事本', '备忘录', '云端存储']
       }
     ],
     // 二级菜单组
