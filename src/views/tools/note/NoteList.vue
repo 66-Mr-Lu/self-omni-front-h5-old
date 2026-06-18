@@ -45,16 +45,31 @@
           v-for="note in notes" 
           :key="note.id" 
           class="note-item bg-white rounded-xl shadow-sm p-4 transition-all active:scale-[0.98]"
+          :class="{ 'border-l-4 border-l-yellow-400': note.isPinned === 'Y' }"
           @click="editNote(note)"
         >
           <div class="flex items-start justify-between mb-2">
-            <h3 class="text-gray-800 font-semibold text-base flex-1 mr-2">{{ note.title || '无标题' }}</h3>
-            <button 
-              class="delete-btn px-3 py-1 bg-red-50 text-red-500 rounded-lg text-xs transition-all active:opacity-80"
-              @click.stop="confirmDelete(note.id)"
-            >
-              删除
-            </button>
+            <div class="flex items-center flex-1 mr-2">
+              <span v-if="note.isPinned === 'Y'" class="mr-2 text-yellow-500" title="已置顶">📌</span>
+              <h3 class="text-gray-800 font-semibold text-base">{{ note.title || '无标题' }}</h3>
+            </div>
+            <div class="flex items-center gap-2">
+              <!-- 置顶/取消置顶按钮 -->
+              <button 
+                class="pin-btn px-2 py-1 rounded-lg text-xs transition-all active:opacity-80"
+                :class="note.isPinned === 'Y' ? 'bg-yellow-50 text-yellow-500' : 'bg-gray-50 text-gray-500'"
+                @click.stop="togglePin(note)"
+                :title="note.isPinned === 'Y' ? '取消置顶' : '置顶'"
+              >
+                <span>{{ note.isPinned === 'Y' ? '取消置顶' : '置顶' }}</span>
+              </button>
+              <button 
+                class="delete-btn px-2 py-1 bg-red-50 text-red-500 rounded-lg text-xs transition-all active:opacity-80"
+                @click.stop="confirmDelete(note.id)"
+              >
+                删除
+              </button>
+            </div>
           </div>
           <p class="text-gray-600 text-sm line-clamp-2 mb-2">{{ truncateContent(note.content) }}</p>
           <div class="text-xs text-gray-400">{{ formatTime(note.updateAt) }}</div>
@@ -88,7 +103,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAllNotes, deleteNote, type Note, type PageResponse } from '@/api/note'
+import { getAllNotes, deleteNote, pinNote, unpinNote, type Note, type PageResponse } from '@/api/note'
 import { showToast, showDialog } from 'vant'
 
 // 路由
@@ -241,6 +256,29 @@ const confirmDelete = async (id: string) => {
   }).catch(() => {
     // 用户取消删除
   })
+}
+
+/**
+ * 切换置顶状态
+ * @param note 笔记对象
+ */
+const togglePin = async (note: Note) => {
+  try {
+    if (note.isPinned === 'Y') {
+      // 取消置顶
+      await unpinNote([Number(note.id)])
+      showToast({ message: '已取消置顶', position: 'top' })
+      note.isPinned = 'N'
+    } else {
+      // 置顶
+      await pinNote([Number(note.id)])
+      showToast({ message: '已置顶', position: 'top' })
+      note.isPinned = 'Y'
+    }
+  } catch (error) {
+    console.error('置顶操作失败:', error)
+    showToast({ message: '操作失败', position: 'top' })
+  }
 }
 
 /**

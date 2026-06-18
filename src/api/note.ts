@@ -7,6 +7,7 @@ export interface Note {
   content: string
   createAt: string
   updateAt: string
+  isPinned: string // 置顶状态：Y-已置顶，N-未置顶
 }
 
 /**
@@ -107,4 +108,20 @@ export const updateNote = async (params: UpdateNoteRequest): Promise<Note> => {
  */
 export const deleteNote = async (ids: number[]): Promise<void> => {
   await request.post('/note/deleteByIds', ids)
+}
+
+/**
+ * 置顶笔记（支持批量置顶）
+ * @param ids 笔记ID数组
+ */
+export const pinNote = async (ids: number[]): Promise<void> => {
+    await request.post('/note/pin', ids)
+}
+
+/**
+ * 取消置顶笔记（支持批量取消置顶）
+ * @param ids 笔记ID数组
+ */
+export const unpinNote = async (ids: number[]): Promise<void> => {
+    await request.post('/note/unpin', ids)
 }

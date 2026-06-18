@@ -63,7 +63,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div v-else class="content pt-14 pb-6">
+    <div v-else class="content pt-10 pb-6">
       <div class="px-4 py-4">
         <div class="bg-white rounded-xl shadow-sm p-4">
           <!-- 标题输入 -->
