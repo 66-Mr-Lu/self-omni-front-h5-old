@@ -3,7 +3,7 @@
     <!-- 内容区域 -->
     <div class="content pt-1 pb-20">
       <!-- 空状态 -->
-      <div v-if="notes.length === 0" class="px-4 py-4">
+      <div v-if="notes.length === 0 && !loading" class="px-4 py-4">
         <div class="bg-white rounded-xl shadow-sm p-8 text-center">
           <div class="text-6xl mb-4">📝</div>
           <div class="text-gray-500 text-base mb-6">暂无笔记</div>
@@ -17,7 +17,7 @@
       </div>
       
       <!-- 笔记列表 -->
-      <div v-else class="px-4 py-4 space-y-3">
+      <div v-else-if="notes.length > 0" class="px-4 py-4 space-y-3">
         <div 
           v-for="note in notes" 
           :key="note.id" 
@@ -36,7 +36,31 @@
           <p class="text-gray-600 text-sm line-clamp-2 mb-2">{{ truncateContent(note.content) }}</p>
           <div class="text-xs text-gray-400">{{ formatTime(note.updatedAt) }}</div>
         </div>
+        
+        <!-- 加载更多提示 -->
+        <div v-if="hasMore" class="text-center py-4">
+          <div class="loading-indicator">
+            <span class="loading-dots"></span>
+            <span class="text-gray-400 text-sm">加载中...</span>
+          </div>
+        </div>
+        
+        <!-- 已加载全部 -->
+        <div v-if="!hasMore && notes.length > 0" class="text-center py-4">
+          <span class="text-gray-400 text-sm">已加载全部笔记</span>
+        </div>
       </div>
+      
+      <!-- 加载状态 -->
+      <div v-if="loading && notes.length === 0" class="flex justify-center items-center py-12">
+        <div class="loading-indicator">
+          <span class="loading-dots"></span>
+          <span class="text-gray-400 text-sm">加载中...</span>
+        </div>
+      </div>
+      
+      <!-- 滚动触发标记（用于 IntersectionObserver） -->
+      <div ref="loadMoreTrigger" class="load-more-trigger"></div>
     </div>
 
     <!-- 悬浮新建按钮 -->
@@ -47,25 +71,73 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAllNotes, deleteNote, type Note } from '@/api/note'
+import { getAllNotes, deleteNote, type Note, type PageResponse } from '@/api/note'
 import { showToast, showDialog } from 'vant'
 
 // 路由
 const router = useRouter()
 
-// 状态
+// 分页状态
 const notes = ref<Note[]>([])
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const hasMore = ref(true)
+const loading = ref(false)
+
+// 滚动触发元素引用
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+
+// IntersectionObserver 实例
+let observer: IntersectionObserver | null = null
 
 /**
  * 加载笔记列表
+ * @param page 页码
+ * @param isLoadMore 是否为加载更多
  */
-const loadNotes = async () => {
+const loadNotes = async (page: number = 1, isLoadMore: boolean = false) => {
+  if (loading.value) return
+  
+  loading.value = true
+  
   try {
-    notes.value = await getAllNotes()
+    const response: PageResponse<Note> = await getAllNotes({
+      pageNum: page,
+      pageSize: pageSize.value
+    })
+    
+    if (isLoadMore) {
+      // 加载更多，追加数据
+      notes.value = [...notes.value, ...response.items]
+    } else {
+      // 刷新，替换数据
+      notes.value = response.items
+    }
+    
+    total.value = response.total
+    currentPage.value = response.pageNum
+    
+    // 判断是否还有更多数据
+    hasMore.value = notes.value.length < response.total
   } catch (error) {
     console.error('加载笔记失败:', error)
+    if (!isLoadMore) {
+      notes.value = []
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+/**
+ * 加载更多
+ */
+const loadMore = () => {
+  if (hasMore.value && !loading.value) {
+    loadNotes(currentPage.value + 1, true)
   }
 }
 
@@ -97,7 +169,10 @@ const confirmDelete = async (id: string) => {
     try {
       await deleteNote(id)
       showToast({ message: '删除成功', position: 'top' })
-      await loadNotes()
+      // 重置分页，重新加载第一页
+      currentPage.value = 1
+      hasMore.value = true
+      await loadNotes(1)
     } catch (error) {
       console.error('删除笔记失败:', error)
       showToast({ message: '删除失败', position: 'top' })
@@ -143,15 +218,59 @@ const formatTime = (timeStr: string): string => {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
 
+/**
+ * 初始化滚动加载监听
+ */
+const initScrollObserver = () => {
+  if (typeof IntersectionObserver !== 'undefined' && loadMoreTrigger.value) {
+    observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry.isIntersecting && hasMore.value && !loading.value) {
+          loadMore()
+        }
+      },
+      {
+        rootMargin: '0px 0px 100px 0px', // 提前100px触发
+        threshold: 0.1
+      }
+    )
+    
+    observer.observe(loadMoreTrigger.value)
+  }
+}
+
+/**
+ * 销毁滚动监听
+ */
+const destroyScrollObserver = () => {
+  if (observer) {
+    observer.disconnect()
+    observer = null
+  }
+}
+
 // 页面加载时获取笔记列表
 onMounted(() => {
-  loadNotes()
+  loadNotes(1)
+  // 初始化滚动监听
+  setTimeout(() => {
+    initScrollObserver()
+  }, 100)
+})
+
+// 页面卸载时销毁监听
+onUnmounted(() => {
+  destroyScrollObserver()
 })
 
 // 监听路由变化，刷新列表
 router.afterEach((to) => {
   if (to.path === '/tools/note') {
-    loadNotes()
+    // 重置分页，重新加载第一页
+    currentPage.value = 1
+    hasMore.value = true
+    loadNotes(1)
   }
 })
 </script>
@@ -192,6 +311,35 @@ router.afterEach((to) => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* 加载指示器 */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-dots {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  border-top-color: #4CAF50;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 滚动触发标记 */
+.load-more-trigger {
+  height: 50px;
 }
 
 /* 悬浮按钮样式 */

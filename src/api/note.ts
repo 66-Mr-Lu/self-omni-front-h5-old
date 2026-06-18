@@ -26,66 +26,40 @@ export interface UpdateNoteRequest {
   content: string
 }
 
-// localStorage 存储键
-const STORAGE_KEY = 'omni_notes'
-
-// Mock 数据
-const mockNotes: Note[] = [
-  {
-    id: '1',
-    title: '欢迎使用记事本',
-    content: '这是您的第一篇笔记。\n\n您可以：\n• 创建新笔记\n• 编辑现有笔记\n• 删除不需要的笔记\n• 所有数据会自动保存到本地',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: '功能说明',
-    content: '记事本功能特点：\n\n📝 支持创建和编辑笔记\n\n📱 移动端友好的界面设计\n\n💾 数据自动保存到本地缓存\n\n🔄 无需网络即可使用',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-]
+/**
+ * 分页请求参数
+ */
+export interface PageRequest {
+  pageNum: number
+  pageSize: number
+}
 
 /**
- * 获取存储的笔记列表
+ * 分页响应结果
  */
-const getStoredNotes = (): Note[] => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    if (data) {
-      return JSON.parse(data)
+export interface PageResponse<T> {
+  items: T[]
+  total: number
+  pageNum: number
+  pageSize: number
+}
+
+// 导入 axios 请求工具
+import request from '@/utils/axios'
+
+/**
+ * 获取笔记列表（分页）
+ * @param params 分页参数
+ * @returns 分页笔记列表
+ */
+export const getAllNotes = async (params: PageRequest): Promise<PageResponse<Note>> => {
+  const response = await request.post<PageResponse<Note>>('/note/list', {
+    params: {
+      pageNum: params.pageNum,
+      pageSize: params.pageSize
     }
-    // 首次使用，返回mock数据并保存
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mockNotes))
-    return mockNotes
-  } catch {
-    return mockNotes
-  }
-}
-
-/**
- * 保存笔记列表到存储
- */
-const saveNotes = (notes: Note[]): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes))
-}
-
-/**
- * 生成唯一ID
- */
-const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
-
-/**
- * 获取所有笔记列表
- * @returns 笔记列表
- */
-export const getAllNotes = async (): Promise<Note[]> => {
-  // 模拟网络延迟
-  await new Promise(resolve => setTimeout(resolve, 200))
-  return getStoredNotes()
+  })
+  return response.data || { items: [], total: 0, pageNum: 1, pageSize: 10 }
 }
 
 /**
@@ -94,13 +68,8 @@ export const getAllNotes = async (): Promise<Note[]> => {
  * @returns 笔记详情
  */
 export const getNoteById = async (id: string): Promise<Note> => {
-  await new Promise(resolve => setTimeout(resolve, 100))
-  const notes = getStoredNotes()
-  const note = notes.find(n => n.id === id)
-  if (!note) {
-    throw new Error('笔记不存在')
-  }
-  return note
+  const response = await request.get<Note>(`/note/${id}`)
+  return response.data as Note
 }
 
 /**
@@ -109,19 +78,8 @@ export const getNoteById = async (id: string): Promise<Note> => {
  * @returns 创建的笔记
  */
 export const createNote = async (params: CreateNoteRequest): Promise<Note> => {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  const notes = getStoredNotes()
-  const now = new Date().toISOString()
-  const newNote: Note = {
-    id: generateId(),
-    title: params.title || '无标题',
-    content: params.content || '',
-    createdAt: now,
-    updatedAt: now
-  }
-  notes.unshift(newNote)
-  saveNotes(notes)
-  return newNote
+  const response = await request.post<Note>('/note/add', params)
+  return response.data as Note
 }
 
 /**
@@ -130,21 +88,8 @@ export const createNote = async (params: CreateNoteRequest): Promise<Note> => {
  * @returns 更新后的笔记
  */
 export const updateNote = async (params: UpdateNoteRequest): Promise<Note> => {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  const notes = getStoredNotes()
-  const index = notes.findIndex(n => n.id === params.id)
-  if (index === -1) {
-    throw new Error('笔记不存在')
-  }
-  const updatedNote: Note = {
-    ...notes[index],
-    title: params.title || '无标题',
-    content: params.content || '',
-    updatedAt: new Date().toISOString()
-  }
-  notes[index] = updatedNote
-  saveNotes(notes)
-  return updatedNote
+  const response = await request.put<Note>(`/note/update`, params)
+  return response.data as Note
 }
 
 /**
@@ -152,8 +97,5 @@ export const updateNote = async (params: UpdateNoteRequest): Promise<Note> => {
  * @param id 笔记ID
  */
 export const deleteNote = async (id: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  const notes = getStoredNotes()
-  const filtered = notes.filter(n => n.id !== id)
-  saveNotes(filtered)
+  await request.delete(`/note/delete/${id}`)
 }
