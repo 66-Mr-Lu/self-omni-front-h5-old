@@ -328,6 +328,13 @@ const loadNoteFromRouteState = () => {
  * 保存笔记
  */
 const saveNote = async () => {
+  // 如果没有修改，不执行保存操作
+  if (!hasUnsavedChanges.value) {
+    // showToast({ message: '内容未修改', position: 'top' })
+    showToast({ message: '保存成功', position: 'top' })
+    return
+  }
+
   // 验证输入
   if (!currentNote.value.title.trim() && !currentNote.value.content.trim()) {
     showToast({ message: '请输入标题或内容', position: 'top' })
