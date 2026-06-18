@@ -215,7 +215,7 @@ const editNote = (note: Note) => {
 const confirmDelete = async (id: string) => {
   showDialog({
     title: '确认删除',
-    message: '删除后无法恢复，确定要删除吗？',
+    message: '删除后无法恢复,确定要删除吗?',
     showCancelButton: true,
     confirmButtonText: '删除',
     cancelButtonText: '取消'
@@ -223,10 +223,17 @@ const confirmDelete = async (id: string) => {
     try {
       await deleteNote([Number(id)])
       showToast({ message: '删除成功', position: 'top' })
-      // 重置分页，重新加载第一页
-      currentPage.value = 1
-      hasMore.value = true
-      await loadNotes(1)
+      // 前端直接移除该笔记,重新渲染列表
+      const index = notes.value.findIndex(note => note.id === id)
+      if (index !== -1) {
+        notes.value.splice(index, 1)
+        total.value -= 1
+        // 如果当前页没有数据了且有更多数据,加载上一页
+        if (notes.value.length === 0 && currentPage.value > 1) {
+          currentPage.value -= 1
+          await loadNotes(currentPage.value)
+        }
+      }
     } catch (error) {
       console.error('删除笔记失败:', error)
       showToast({ message: '删除失败', position: 'top' })
