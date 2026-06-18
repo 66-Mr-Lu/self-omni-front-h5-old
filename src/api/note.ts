@@ -5,8 +5,8 @@ export interface Note {
   id: string
   title: string
   content: string
-  createdAt: string
-  updatedAt: string
+  createAt: string
+  updateAt: string
 }
 
 /**
@@ -27,21 +27,22 @@ export interface UpdateNoteRequest {
 }
 
 /**
- * 分页请求参数
+ * 分页请求参数（适配 MyBatis Plus 分页）
  */
 export interface PageRequest {
-  pageNum: number
-  pageSize: number
+  pageNum: number  // 当前页码（从1开始）
+  pageSize: number // 每页条数
 }
 
 /**
- * 分页响应结果
+ * MyBatis Plus 分页响应结果
+ * @template T - 数据类型
  */
 export interface PageResponse<T> {
-  items: T[]
-  total: number
-  pageNum: number
-  pageSize: number
+  records: T[]   // 当前页数据列表（MyBatis Plus 默认字段）
+  total: number  // 总记录数
+  size: number   // 每页条数（MyBatis Plus 默认字段）
+  current: number // 当前页码（MyBatis Plus 默认字段）
 }
 
 // 导入 axios 请求工具
@@ -49,6 +50,7 @@ import request from '@/utils/axios'
 
 /**
  * 获取笔记列表（分页）
+ * 使用 GET 请求传递分页参数，适配 MyBatis Plus 分页响应格式
  * @param params 分页参数
  * @returns 分页笔记列表
  */
@@ -59,7 +61,14 @@ export const getAllNotes = async (params: PageRequest): Promise<PageResponse<Not
       pageSize: params.pageSize
     }
   })
-  return response.data || { items: [], total: 0, pageNum: 1, pageSize: 10 }
+  // 转换 MyBatis Plus 分页响应格式，确保数据安全
+  const data = response.data || { records: [], total: 0, size: 10, current: 1 }
+  return {
+    records: data.records || [],
+    total: data.total || 0,
+    size: data.size || params.pageSize,
+    current: data.current || params.pageNum
+  }
 }
 
 /**
@@ -88,7 +97,7 @@ export const createNote = async (params: CreateNoteRequest): Promise<Note> => {
  * @returns 更新后的笔记
  */
 export const updateNote = async (params: UpdateNoteRequest): Promise<Note> => {
-  const response = await request.put<Note>(`/note/update`, params)
+  const response = await request.post<Note>(`/note/update`, params)
   return response.data as Note
 }
 

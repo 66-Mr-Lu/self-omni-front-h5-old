@@ -7,6 +7,8 @@
           <!-- 返回按钮 -->
           <button 
             class="toolbar-btn" 
+            :class="{ disabled: loading }"
+            :disabled="loading"
             @click="handleGoBack"
             title="返回"
           >
@@ -16,8 +18,8 @@
           <!-- 撤销按钮 -->
           <button 
             class="toolbar-btn" 
-            :class="{ disabled: !canUndo }"
-            :disabled="!canUndo"
+            :class="{ disabled: !canUndo || loading }"
+            :disabled="!canUndo || loading"
             @click="undo"
             title="撤销"
           >
@@ -27,8 +29,8 @@
           <!-- 重做按钮 -->
           <button 
             class="toolbar-btn" 
-            :class="{ disabled: !canRedo }"
-            :disabled="!canRedo"
+            :class="{ disabled: !canRedo || loading }"
+            :disabled="!canRedo || loading"
             @click="redo"
             title="重做"
           >
@@ -38,17 +40,30 @@
           <!-- 保存按钮 -->
           <button 
             class="toolbar-btn save-btn" 
+            :class="{ disabled: loading }"
+            :disabled="loading"
             @click="saveNote"
             title="保存"
           >
-            <span class="btn-icon">✓</span>
+            <span v-if="!saving" class="btn-icon">✓</span>
+            <span v-else class="saving-icon">●</span>
           </button>
         </div>
       </div>
     </div>
 
+    <!-- 加载状态 -->
+    <div v-if="loading" class="content pt-14">
+      <div class="flex justify-center items-center py-20">
+        <div class="loading-indicator">
+          <span class="loading-dots"></span>
+          <span class="text-gray-400 text-sm">加载中...</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 内容区域 -->
-    <div class="content pt-10 pb-6">
+    <div v-else class="content pt-14 pb-6">
       <div class="px-4 py-4">
         <div class="bg-white rounded-xl shadow-sm p-4">
           <!-- 标题输入 -->
@@ -57,14 +72,16 @@
             class="note-title-input w-full px-3 py-2 text-lg font-semibold text-gray-800 border-b border-gray-200 focus:outline-none focus:border-primary mb-3"
             placeholder="输入标题..."
             @input="onContentChange"
+            :disabled="loading"
           />
           
           <!-- 内容输入 -->
           <textarea 
             v-model="currentNote.content" 
-            class="note-content-textarea w-full h-[calc(100vh-200px)] px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none"
+            class="note-content-textarea w-full h-[calc(100vh-220px)] px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none"
             placeholder="输入内容..."
             @input="onContentChange"
+            :disabled="loading"
           ></textarea>
         </div>
       </div>
@@ -73,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getNoteById, createNote, updateNote, type Note, type CreateNoteRequest, type UpdateNoteRequest } from '@/api/note'
 import { showToast, showDialog } from 'vant'
@@ -85,15 +102,19 @@ const route = useRoute()
 // 状态
 const isEdit = ref(false) // 是否编辑模式
 const noteId = ref('') // 笔记ID
+const loading = ref(false) // 页面加载状态
+const saving = ref(false) // 保存状态
+
 const currentNote = ref<{ id: string; title: string; content: string }>({
   id: '',
   title: '',
   content: ''
 })
 
-// 撤销/重做历史
+// 撤销/重做历史（最大50步）
 const history = ref<{ title: string; content: string }[]>([])
 const historyIndex = ref(-1)
+const MAX_HISTORY = 50
 
 // 原始内容（用于检测是否修改）
 const originalContent = ref({ title: '', content: '' })
@@ -114,7 +135,23 @@ const canRedo = computed(() => historyIndex.value < history.value.length - 1)
  * 保存历史记录
  */
 const saveHistory = () => {
-  // 清除当前位置之后的历史
+  // 获取当前状态的字符串表示，用于去重
+  const currentState = JSON.stringify({
+    title: currentNote.value.title,
+    content: currentNote.value.content
+  })
+  
+  // 获取上一条历史记录的状态
+  const lastState = historyIndex.value >= 0 
+    ? JSON.stringify(history.value[historyIndex.value]) 
+    : null
+  
+  // 如果当前状态与上一条历史相同，则不保存（避免重复记录）
+  if (lastState === currentState) {
+    return
+  }
+  
+  // 清除当前位置之后的历史（用户在撤销后进行了新的操作）
   history.value = history.value.slice(0, historyIndex.value + 1)
   
   // 添加当前状态到历史
@@ -124,18 +161,29 @@ const saveHistory = () => {
   })
   
   // 限制历史记录数量
-  if (history.value.length > 50) {
+  if (history.value.length > MAX_HISTORY) {
     history.value.shift()
   } else {
     historyIndex.value++
   }
 }
 
+// 防抖保存历史（避免频繁保存）
+let historyTimer: number | null = null
+const debouncedSaveHistory = () => {
+  if (historyTimer) {
+    clearTimeout(historyTimer)
+  }
+  historyTimer = window.setTimeout(() => {
+    saveHistory()
+  }, 100)
+}
+
 /**
  * 撤销
  */
 const undo = () => {
-  if (!canUndo.value) return
+  if (!canUndo.value || loading.value) return
   
   historyIndex.value--
   const prevState = history.value[historyIndex.value]
@@ -147,7 +195,7 @@ const undo = () => {
  * 重做
  */
 const redo = () => {
-  if (!canRedo.value) return
+  if (!canRedo.value || loading.value) return
   
   historyIndex.value++
   const nextState = history.value[historyIndex.value]
@@ -156,16 +204,19 @@ const redo = () => {
 }
 
 /**
- * 内容变更时保存历史
+ * 内容变更时保存历史（使用防抖）
  */
 const onContentChange = () => {
-  saveHistory()
+  debouncedSaveHistory()
 }
 
 /**
  * 返回处理
  */
 const handleGoBack = async () => {
+  // 如果正在保存，不允许返回
+  if (saving.value) return
+  
   // 如果有未保存的修改，提示用户
   if (hasUnsavedChanges.value) {
     showDialog({
@@ -190,6 +241,8 @@ const handleGoBack = async () => {
  * 加载笔记详情
  */
 const loadNoteDetail = async () => {
+  loading.value = true
+  
   try {
     const note = await getNoteById(noteId.value)
     currentNote.value = {
@@ -204,7 +257,11 @@ const loadNoteDetail = async () => {
   } catch (error) {
     console.error('加载笔记失败:', error)
     showToast({ message: '加载笔记失败', position: 'top' })
-    router.back()
+    setTimeout(() => {
+      router.back()
+    }, 1500)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -224,13 +281,61 @@ const initNewNote = () => {
 }
 
 /**
+ * 从路由状态加载笔记数据（避免重复请求）
+ */
+const loadNoteFromRouteState = () => {
+  // Vue Router 4.x 中，state 需要通过 window.history.state 获取
+  const noteData = (window.history.state as any)?.noteData as Note | undefined
+  if (noteData) {
+    currentNote.value = {
+      id: noteData.id,
+      title: noteData.title,
+      content: noteData.content
+    }
+    // 初始化历史记录
+    history.value = [{ title: noteData.title, content: noteData.content }]
+    historyIndex.value = 0
+    originalContent.value = { title: noteData.title, content: noteData.content }
+    return true
+  }
+  
+  // 如果 state 中没有数据，尝试从 sessionStorage 获取（处理页面刷新情况）
+  if (isEdit.value && noteId.value) {
+    const cachedNote = sessionStorage.getItem(`note_${noteId.value}`)
+    if (cachedNote) {
+      try {
+        const parsedNote = JSON.parse(cachedNote) as Note
+        currentNote.value = {
+          id: parsedNote.id,
+          title: parsedNote.title,
+          content: parsedNote.content
+        }
+        // 初始化历史记录
+        history.value = [{ title: parsedNote.title, content: parsedNote.content }]
+        historyIndex.value = 0
+        originalContent.value = { title: parsedNote.title, content: parsedNote.content }
+        return true
+      } catch (error) {
+        console.error('解析缓存笔记失败:', error)
+      }
+    }
+  }
+  
+  return false
+}
+
+/**
  * 保存笔记
  */
 const saveNote = async () => {
+  // 验证输入
   if (!currentNote.value.title.trim() && !currentNote.value.content.trim()) {
     showToast({ message: '请输入标题或内容', position: 'top' })
     return
   }
+
+  // 设置保存状态
+  saving.value = true
 
   try {
     if (isEdit.value) {
@@ -251,11 +356,27 @@ const saveNote = async () => {
       await createNote(params)
       showToast({ message: '创建成功', position: 'top' })
     }
-    // 返回列表
-    router.back()
+    
+    // 保存成功后更新原始内容，避免返回时再次提示
+    originalContent.value = { 
+      title: currentNote.value.title.trim(), 
+      content: currentNote.value.content.trim() 
+    }
+    
+    // 清理 sessionStorage 中的缓存
+    if (currentNote.value.id) {
+      sessionStorage.removeItem(`note_${currentNote.value.id}`)
+    }
+    
+    // 延迟返回，让用户看到成功提示
+    setTimeout(() => {
+      router.back()
+    }, 500)
   } catch (error) {
     console.error('保存笔记失败:', error)
     showToast({ message: '保存失败', position: 'top' })
+  } finally {
+    saving.value = false
   }
 }
 
@@ -270,11 +391,24 @@ onMounted(() => {
     // 编辑模式
     isEdit.value = true
     noteId.value = route.params.id as string
-    loadNoteDetail()
+    
+    // 优先从路由状态中获取数据（避免重复请求）
+    const loadedFromState = loadNoteFromRouteState()
+    if (!loadedFromState) {
+      // 如果没有路由状态数据，才调用接口获取
+      loadNoteDetail()
+    }
   } else {
     // 创建模式
     isEdit.value = false
     initNewNote()
+  }
+})
+
+// 页面卸载时清理定时器
+onUnmounted(() => {
+  if (historyTimer) {
+    clearTimeout(historyTimer)
   }
 })
 </script>
@@ -345,5 +479,57 @@ onMounted(() => {
 .note-content-textarea {
   background-color: transparent;
   line-height: 1.6;
+}
+
+/* 加载指示器 */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.loading-dots {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  border-top-color: #4CAF50;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 保存中状态 */
+.saving-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* 禁用状态输入框样式 */
+.note-title-input:disabled,
+.note-content-textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

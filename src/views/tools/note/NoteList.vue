@@ -2,8 +2,31 @@
   <div class="note-list-page min-h-screen bg-gray-100">
     <!-- 内容区域 -->
     <div class="content pt-1 pb-20">
+      <!-- 加载状态 -->
+      <div v-if="loading && notes.length === 0 && !error" class="flex justify-center items-center py-12">
+        <div class="loading-indicator">
+          <span class="loading-dots"></span>
+          <span class="text-gray-400 text-sm">加载中...</span>
+        </div>
+      </div>
+      
+      <!-- 错误状态 -->
+      <div v-if="error" class="px-4 py-4">
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div class="text-6xl mb-4">⚠️</div>
+          <div class="text-gray-500 text-base mb-2">加载失败</div>
+          <div class="text-gray-400 text-sm mb-6">{{ errorMessage }}</div>
+          <button 
+            class="px-6 py-2.5 bg-gradient-to-r from-primary to-info text-white rounded-xl text-sm font-medium transition-all active:opacity-80 shadow-md"
+            @click="retryLoad"
+          >
+            重新加载
+          </button>
+        </div>
+      </div>
+      
       <!-- 空状态 -->
-      <div v-if="notes.length === 0 && !loading" class="px-4 py-4">
+      <div v-else-if="notes.length === 0 && !loading" class="px-4 py-4">
         <div class="bg-white rounded-xl shadow-sm p-8 text-center">
           <div class="text-6xl mb-4">📝</div>
           <div class="text-gray-500 text-base mb-6">暂无笔记</div>
@@ -34,11 +57,11 @@
             </button>
           </div>
           <p class="text-gray-600 text-sm line-clamp-2 mb-2">{{ truncateContent(note.content) }}</p>
-          <div class="text-xs text-gray-400">{{ formatTime(note.updatedAt) }}</div>
+          <div class="text-xs text-gray-400">{{ formatTime(note.updateAt) }}</div>
         </div>
         
         <!-- 加载更多提示 -->
-        <div v-if="hasMore" class="text-center py-4">
+        <div v-if="hasMore && loadingMore" class="text-center py-4">
           <div class="loading-indicator">
             <span class="loading-dots"></span>
             <span class="text-gray-400 text-sm">加载中...</span>
@@ -48,14 +71,6 @@
         <!-- 已加载全部 -->
         <div v-if="!hasMore && notes.length > 0" class="text-center py-4">
           <span class="text-gray-400 text-sm">已加载全部笔记</span>
-        </div>
-      </div>
-      
-      <!-- 加载状态 -->
-      <div v-if="loading && notes.length === 0" class="flex justify-center items-center py-12">
-        <div class="loading-indicator">
-          <span class="loading-dots"></span>
-          <span class="text-gray-400 text-sm">加载中...</span>
         </div>
       </div>
       
@@ -86,6 +101,11 @@ const pageSize = ref(10)
 const total = ref(0)
 const hasMore = ref(true)
 const loading = ref(false)
+const loadingMore = ref(false)
+
+// 错误状态
+const error = ref(false)
+const errorMessage = ref('网络请求失败，请稍后重试')
 
 // 滚动触发元素引用
 const loadMoreTrigger = ref<HTMLElement | null>(null)
@@ -99,9 +119,17 @@ let observer: IntersectionObserver | null = null
  * @param isLoadMore 是否为加载更多
  */
 const loadNotes = async (page: number = 1, isLoadMore: boolean = false) => {
-  if (loading.value) return
-  
-  loading.value = true
+  // 加载更多时设置独立的 loading 状态
+  if (isLoadMore) {
+    if (loadingMore.value) return
+    loadingMore.value = true
+  } else {
+    if (loading.value) return
+    loading.value = true
+    // 重置错误状态
+    error.value = false
+    errorMessage.value = ''
+  }
   
   try {
     const response: PageResponse<Note> = await getAllNotes({
@@ -110,26 +138,46 @@ const loadNotes = async (page: number = 1, isLoadMore: boolean = false) => {
     })
     
     if (isLoadMore) {
-      // 加载更多，追加数据
-      notes.value = [...notes.value, ...response.items]
+      // 加载更多，追加数据（使用 MyBatis Plus 的 records 字段）
+      notes.value = [...notes.value, ...response.records]
     } else {
-      // 刷新，替换数据
-      notes.value = response.items
+      // 刷新，替换数据（使用 MyBatis Plus 的 records 字段）
+      notes.value = response.records
     }
     
     total.value = response.total
-    currentPage.value = response.pageNum
+    currentPage.value = response.current
     
     // 判断是否还有更多数据
     hasMore.value = notes.value.length < response.total
-  } catch (error) {
-    console.error('加载笔记失败:', error)
+  } catch (err) {
+    console.error('加载笔记失败:', err)
+    const errMsg = err instanceof Error ? err.message : '网络请求失败，请稍后重试'
     if (!isLoadMore) {
       notes.value = []
+      error.value = true
+      errorMessage.value = errMsg
+    } else {
+      // 加载更多失败时提示用户
+      showToast({ message: '加载更多失败', position: 'top' })
     }
   } finally {
-    loading.value = false
+    if (isLoadMore) {
+      loadingMore.value = false
+    } else {
+      loading.value = false
+    }
   }
+}
+
+/**
+ * 重试加载
+ */
+const retryLoad = () => {
+  currentPage.value = 1
+  hasMore.value = true
+  notes.value = []
+  loadNotes(1)
 }
 
 /**
@@ -149,10 +197,16 @@ const createNewNote = () => {
 }
 
 /**
- * 编辑笔记
+ * 编辑笔记（通过路由参数传递数据）
  */
 const editNote = (note: Note) => {
-  router.push(`/tools/note/edit/${note.id}`)
+  // 将笔记数据存储到 sessionStorage，确保刷新页面后仍能获取
+  sessionStorage.setItem(`note_${note.id}`, JSON.stringify(note))
+  
+  router.push({
+    path: `/tools/note/edit/${note.id}`,
+    state: { noteData: note }
+  })
 }
 
 /**
@@ -262,16 +316,6 @@ onMounted(() => {
 // 页面卸载时销毁监听
 onUnmounted(() => {
   destroyScrollObserver()
-})
-
-// 监听路由变化，刷新列表
-router.afterEach((to) => {
-  if (to.path === '/tools/note') {
-    // 重置分页，重新加载第一页
-    currentPage.value = 1
-    hasMore.value = true
-    loadNotes(1)
-  }
 })
 </script>
 
