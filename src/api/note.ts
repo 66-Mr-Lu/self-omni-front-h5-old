@@ -102,9 +102,9 @@ export const updateNote = async (params: UpdateNoteRequest): Promise<Note> => {
 }
 
 /**
- * 删除笔记
- * @param id 笔记ID
+ * 删除笔记（支持批量删除）
+ * @param ids 笔记ID数组
  */
-export const deleteNote = async (id: string): Promise<void> => {
-  await request.delete(`/note/delete/${id}`)
+export const deleteNote = async (ids: number[]): Promise<void> => {
+  await request.post('/note/deleteByIds', ids)
 }

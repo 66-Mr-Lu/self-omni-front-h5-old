@@ -221,7 +221,7 @@ const confirmDelete = async (id: string) => {
     cancelButtonText: '取消'
   }).then(async () => {
     try {
-      await deleteNote(id)
+      await deleteNote([Number(id)])
       showToast({ message: '删除成功', position: 'top' })
       // 重置分页，重新加载第一页
       currentPage.value = 1
