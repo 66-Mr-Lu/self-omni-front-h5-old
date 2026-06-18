@@ -369,9 +369,9 @@ const saveNote = async () => {
     }
     
     // 延迟返回，让用户看到成功提示
-    setTimeout(() => {
-      router.back()
-    }, 500)
+    // setTimeout(() => {
+    //   router.back()
+    // }, 500)
   } catch (error) {
     console.error('保存笔记失败:', error)
     showToast({ message: '保存失败', position: 'top' })
