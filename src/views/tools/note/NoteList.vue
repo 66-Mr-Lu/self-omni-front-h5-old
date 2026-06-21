@@ -220,7 +220,7 @@ const editNote = (note: Note) => {
   
   router.push({
     path: `/tools/note/edit/${note.id}`,
-    state: { noteData: note }
+    state: { noteData: JSON.parse(JSON.stringify(note)) }
   })
 }
 
