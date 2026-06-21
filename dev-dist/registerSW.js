@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/omni/dev-sw.js?dev-sw', { scope: '/omni/', type: 'classic' })
