@@ -14,7 +14,7 @@ export interface BaseResponse<T = any> {
 
 // 创建axios实例
 const instance: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://guai01bin.hopto.org:32280/omni/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/omni/api/v1',
   timeout: 30000, // 30秒超时
   headers: {
     'Content-Type': 'application/json'
