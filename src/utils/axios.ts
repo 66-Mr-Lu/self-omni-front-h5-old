@@ -145,3 +145,6 @@ const request = {
 }
 
 export default request
+
+// 导出axios实例，用于特殊请求（如获取二进制流）
+export { instance }

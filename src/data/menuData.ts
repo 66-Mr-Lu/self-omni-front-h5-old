@@ -257,6 +257,16 @@ export const menuData: TopCategory[] = [
         tags: ['B站', 'bilibili', '视频', '下载', 'Bilibili']
       },
       { 
+        id: 'video-list', 
+        name: '视频列表', 
+        icon: '📋', 
+        action: 'videoList', 
+        priority: 15, 
+        routePath: '/download/videos',
+        desc: '查看已下载的视频列表',
+        tags: ['视频', '列表', '播放', '已下载']
+      },
+      { 
         id: 'douyin-download', 
         name: '抖音视频下载', 
         icon: '📱', 

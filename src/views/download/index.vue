@@ -56,6 +56,8 @@ const handleChildClick = (item: LeafMenu) => {
   // 根据菜单项ID跳转到对应页面
   if (item.id === 'bilibili-download') {
     router.push('/download/bilibili')
+  } else if (item.id === 'video-list') {
+    router.push('/download/videos')
   } else if (item.id === 'douyin-download') {
     // 抖音下载功能暂未实现，显示提示
     showDialog({

@@ -18,6 +18,8 @@ const Base64ConvertPage = () => import('@/views/tools/base64-convert.vue')
 const NoteListPage = () => import('@/views/tools/note/NoteList.vue')
 const NoteEditorPage = () => import('@/views/tools/note/NoteEditor.vue')
 const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
+const VideoListPage = () => import('@/views/download/VideoList.vue')
+const VideoPlayerPage = () => import('@/views/download/VideoPlayer.vue')
 
 // 登录页面（懒加载）
 const LoginPage = () => import('@/views/login/index.vue')
@@ -151,6 +153,18 @@ const routes: RouteRecordRaw[] = [
         path: 'download/bilibili',
         name: 'BilibiliDownload',
         component: BilibiliDownloadPage,
+        meta: { categoryId: 'download', requiresAuth: false }
+      },
+      {
+        path: 'download/videos',
+        name: 'VideoList',
+        component: VideoListPage,
+        meta: { categoryId: 'download', requiresAuth: false }
+      },
+      {
+        path: 'download/video/:id',
+        name: 'VideoPlayer',
+        component: VideoPlayerPage,
         meta: { categoryId: 'download', requiresAuth: false }
       },
       {
