@@ -61,6 +61,28 @@ export async function getVideoList(page: number = 1, size: number = 20): Promise
 }
 
 /**
+ * 获取随机视频列表（无分页）
+ * 暂时没有入参，没有分页
+ * @returns 视频列表数组
+ */
+export async function getRandomVideoList(): Promise<ListBilibiliVideoInfoResp[]> {
+  try {
+    const response = await request.post<ListBilibiliVideoInfoResp[]>('/bilibili/video/random-list', {})
+
+    if (response.code === 200 && response.data) {
+      return response.data
+    } else {
+      throw new Error(response.message || '获取视频列表失败')
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('网络请求失败，请检查网络连接')
+  }
+}
+
+/**
  * 获取单个视频详情
  * @param id 视频ID
  * @returns 视频详情

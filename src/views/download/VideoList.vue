@@ -65,20 +65,26 @@
           </div>
         </div>
 
-        <!-- 加载更多 -->
-        <div v-if="hasMore" class="flex justify-center py-4">
+        <!-- 加载中 -->
+        <div v-if="loadingMore" class="flex justify-center py-4">
+          <div class="flex items-center">
+            <div class="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin"></div>
+            <span class="text-gray-400 text-sm ml-2">加载中...</span>
+          </div>
+        </div>
+
+        <!-- 加载更多按钮 -->
+        <div v-else-if="hasMore && videoList.length > 0" class="flex justify-center py-4">
           <button
-            class="px-6 py-2 bg-gray-200 text-gray-600 rounded-lg text-sm font-medium transition-all active:opacity-80"
-            :disabled="loadingMore"
-            :class="{ 'opacity-50 cursor-not-allowed': loadingMore }"
+            class="px-6 py-2 bg-primary text-white rounded-lg text-sm font-medium transition-all active:opacity-80"
             @click="loadMore"
           >
-            {{ loadingMore ? '加载中...' : '加载更多' }}
+            加载更多
           </button>
         </div>
 
         <!-- 没有更多 -->
-        <div v-else-if="videoList.length > 0" class="text-center py-4 text-gray-400 text-sm">
+        <div v-else-if="!hasMore && videoList.length > 0" class="text-center py-4 text-gray-400 text-sm">
           —— 已显示全部视频 ——
         </div>
       </div>
@@ -91,14 +97,35 @@
         <p class="text-gray-400 text-sm">暂无视频</p>
       </div>
     </div>
+
+    <!-- 回到顶部按钮 -->
+    <div
+      v-if="showBackTop"
+      class="back-top-btn fixed bottom-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer z-50 transition-opacity active:opacity-80"
+      @click="scrollToTop"
+    >
+      <span class="text-primary text-lg">↑</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
-import { getVideoList, type ListBilibiliVideoInfoResp, type PageResponse } from '@/api/download'
+import { getRandomVideoList, type ListBilibiliVideoInfoResp } from '@/api/download'
+
+// 节流函数
+const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, delay: number): T => {
+  let lastTime = 0
+  return ((...args: unknown[]) => {
+    const now = Date.now()
+    if (now - lastTime >= delay) {
+      lastTime = now
+      fn(...args)
+    }
+  }) as T
+}
 
 // 路由
 const router = useRouter()
@@ -110,17 +137,28 @@ const videoList = ref<ListBilibiliVideoInfoResp[]>([])
 const loading = ref(false)
 const loadingMore = ref(false)
 
-// 分页信息
-const currentPage = ref(1)
-const pageSize = ref(20)
+// 分页信息（暂时注释）
+// const currentPage = ref(1)
+// const pageSize = ref(20)
 const total = ref(0)
 
 // 是否有更多数据
 const hasMore = ref(true)
 
+// 是否显示回到顶部按钮
+const showBackTop = ref(false)
+
 // 返回上一页
 const goBack = () => {
   router.back()
+}
+
+// 回到顶部
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
 }
 
 // 格式化日期
@@ -169,36 +207,42 @@ const openUpSpace = (video: ListBilibiliVideoInfoResp) => {
   }, 1500)
 }
 
-// 获取视频列表
-const fetchVideoList = async (page: number = 1) => {
-  if (loading.value || loadingMore.value) {
+// 获取视频列表（使用随机列表接口，无分页）
+const fetchVideoList = async (append: boolean = false) => {
+  if (loading.value || (append && loadingMore.value)) {
     return
   }
 
   try {
-    if (page === 1) {
-      loading.value = true
-    } else {
+    if (append) {
       loadingMore.value = true
+    } else {
+      loading.value = true
     }
 
-    const result: PageResponse<ListBilibiliVideoInfoResp> = await getVideoList(page, pageSize.value)
+    const result = await getRandomVideoList()
     
-    // 检查返回数据是否有效
-    if (!result || !result.records) {
+    if (!result) {
       throw new Error('获取数据失败')
     }
     
-    if (page === 1) {
-      videoList.value = result.records
+    if (append) {
+      const existingIds = new Set(videoList.value.map(v => v.id))
+      const newVideos = result.filter(v => !existingIds.has(v.id))
+      
+      videoList.value = [...videoList.value, ...newVideos]
+      
+      if (newVideos.length === 0) {
+        hasMore.value = false
+      }
     } else {
-      videoList.value = [...videoList.value, ...result.records]
+      videoList.value = result
     }
+    total.value = videoList.value.length
     
-    // 处理total字段，确保是数字类型
-    total.value = typeof result.total === 'number' ? result.total : 0
-    currentPage.value = typeof result.current === 'number' ? result.current : page
-    hasMore.value = videoList.value.length < total.value
+    if (result.length === 0) {
+      hasMore.value = false
+    }
   } catch (error) {
     showToast({
       message: error instanceof Error ? error.message : '获取视频列表失败',
@@ -213,13 +257,25 @@ const fetchVideoList = async (page: number = 1) => {
 // 加载更多
 const loadMore = () => {
   if (hasMore.value && !loadingMore.value) {
-    fetchVideoList(currentPage.value + 1)
+    fetchVideoList(true)
   }
 }
 
+// 滚动监听处理函数（控制回到顶部按钮显隐）
+const handleScroll = throttle(() => {
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+  showBackTop.value = scrollTop > 300
+}, 200)
+
 // 页面加载时获取视频列表
 onMounted(() => {
-  fetchVideoList(1)
+  fetchVideoList()
+  window.addEventListener('scroll', handleScroll)
+})
+
+// 页面卸载时移除滚动监听
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
