@@ -8,7 +8,23 @@
         </div>
         <h1 class="text-white text-lg font-semibold mx-3">视频列表</h1>
         <div class="ml-auto flex items-center">
-          <span class="text-white/70 text-sm">{{ total }} 个视频</span>
+<!--          <span class="text-white/70 text-sm">{{ total }} 个视频</span>-->
+          <div class="toggle-switch bg-white/10 rounded-full p-0.5 flex">
+            <button
+              :class="['px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-300',
+                !showDownloadedOnly ? 'bg-white text-primary shadow-sm' : 'text-white/70']"
+              @click="handleToggleFilter(false)"
+            >
+              全部
+            </button>
+            <button
+              :class="['px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-300',
+                showDownloadedOnly ? 'bg-white text-primary shadow-sm' : 'text-white/70']"
+              @click="handleToggleFilter(true)"
+            >
+              已下载
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -137,6 +153,9 @@ const videoList = ref<ListBilibiliVideoInfoResp[]>([])
 const loading = ref(false)
 const loadingMore = ref(false)
 
+// 筛选条件
+const showDownloadedOnly = ref(false)
+
 // 分页信息（暂时注释）
 // const currentPage = ref(1)
 // const pageSize = ref(20)
@@ -168,6 +187,15 @@ const formatDate = (timestamp: number): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${month}-${day}`
+}
+
+// 切换筛选条件
+const handleToggleFilter = (showDownloaded: boolean) => {
+  if (showDownloadedOnly.value === showDownloaded) {
+    return
+  }
+  showDownloadedOnly.value = showDownloaded
+  fetchVideoList()
 }
 
 // 点击视频项，跳转到播放页面
@@ -220,7 +248,8 @@ const fetchVideoList = async (append: boolean = false) => {
       loading.value = true
     }
 
-    const result = await getRandomVideoList()
+    const isDownload = showDownloadedOnly.value ? 'Y' : null
+    const result = await getRandomVideoList(isDownload)
     
     if (!result) {
       throw new Error('获取数据失败')
@@ -282,6 +311,24 @@ onUnmounted(() => {
 <style scoped>
 .back-btn:active {
   opacity: 0.7;
+}
+
+.toggle-switch {
+  display: inline-flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.toggle-switch button {
+  min-width: 50px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.toggle-switch button:active {
+  transform: scale(0.95);
 }
 
 .line-clamp-2 {
