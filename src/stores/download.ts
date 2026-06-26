@@ -19,6 +19,9 @@ export const useDownloadStore = defineStore('download', () => {
   // 队列错误信息
   const queueError = ref('')
 
+  // 视频列表筛选条件：只显示已下载
+  const showDownloadedOnly = ref(false)
+
   // 设置加入队列状态
   const setAddingQueue = (adding: boolean) => {
     isAddingQueue.value = adding
@@ -42,6 +45,11 @@ export const useDownloadStore = defineStore('download', () => {
     queueSuccess.value = false
   }
 
+  // 设置筛选条件
+  const setShowDownloadedOnly = (show: boolean) => {
+    showDownloadedOnly.value = show
+  }
+
   // 重置状态
   const resetState = () => {
     errorMessage.value = ''
@@ -57,11 +65,13 @@ export const useDownloadStore = defineStore('download', () => {
     queueSuccess,
     queueResult,
     queueError,
+    showDownloadedOnly,
     // 方法
     setAddingQueue,
     setErrorMessage,
     setQueueResult,
     setQueueError,
+    setShowDownloadedOnly,
     resetState
   }
 })

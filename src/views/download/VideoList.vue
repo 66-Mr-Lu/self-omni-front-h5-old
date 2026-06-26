@@ -126,10 +126,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import { getRandomVideoList, type ListBilibiliVideoInfoResp } from '@/api/download'
+import { useDownloadStore } from '@/stores/download'
 
 // 节流函数
 const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, delay: number): T => {
@@ -146,6 +147,9 @@ const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, delay: numbe
 // 路由
 const router = useRouter()
 
+// 使用下载 store
+const downloadStore = useDownloadStore()
+
 // 视频列表
 const videoList = ref<ListBilibiliVideoInfoResp[]>([])
 
@@ -153,8 +157,11 @@ const videoList = ref<ListBilibiliVideoInfoResp[]>([])
 const loading = ref(false)
 const loadingMore = ref(false)
 
-// 筛选条件
-const showDownloadedOnly = ref(false)
+// 从 store 获取筛选条件
+const showDownloadedOnly = computed({
+  get: () => downloadStore.showDownloadedOnly,
+  set: (value: boolean) => downloadStore.setShowDownloadedOnly(value)
+})
 
 // 分页信息（暂时注释）
 // const currentPage = ref(1)
