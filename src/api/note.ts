@@ -57,10 +57,8 @@ import request from '@/utils/axios'
  */
 export const getAllNotes = async (params: PageRequest): Promise<PageResponse<Note>> => {
   const response = await request.post<PageResponse<Note>>('/note/list', {
-    params: {
       pageNum: params.pageNum,
       pageSize: params.pageSize
-    }
   })
   // 转换 MyBatis Plus 分页响应格式，确保数据安全
   const data = response.data || { records: [], total: 0, size: 10, current: 1 }

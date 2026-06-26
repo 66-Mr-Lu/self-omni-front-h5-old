@@ -43,10 +43,8 @@ export interface PageResponse<T> {
 export async function getVideoList(page: number = 1, size: number = 20): Promise<PageResponse<ListBilibiliVideoInfoResp>> {
   try {
     const response = await request.post<PageResponse<ListBilibiliVideoInfoResp>>('/bilibili/video/list', {
-      params: {
         pageNum: page,
         pageSize: size
-      }
     })
 
     if (response.code === 200 && response.data) {
