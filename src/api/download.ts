@@ -61,13 +61,17 @@ export async function getVideoList(page: number = 1, size: number = 20): Promise
 }
 
 /**
- * 获取随机视频列表（无分页）
- * 暂时没有入参，没有分页
+ * 获取随机视频列表(无分页)
+ * 暂时没有入参,没有分页
  * @returns 视频列表数组
  */
 export async function getRandomVideoList(): Promise<ListBilibiliVideoInfoResp[]> {
   try {
-    const response = await request.post<ListBilibiliVideoInfoResp[]>('/bilibili/video/random-list', {})
+    const response = await request.post<ListBilibiliVideoInfoResp[]>('/bilibili/video/random-list', {}, {
+      params: {
+        _t: Date.now()
+      }
+    })
 
     if (response.code === 200 && response.data) {
       return response.data
