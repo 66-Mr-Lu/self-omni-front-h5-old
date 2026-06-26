@@ -101,7 +101,7 @@
     <!-- 回到顶部按钮 -->
     <div
       v-if="showBackTop"
-      class="back-top-btn fixed bottom-6 right-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer z-50 transition-opacity active:opacity-80"
+      class="back-top-btn fixed bottom-20 right-3 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer z-50 transition-opacity active:opacity-80"
       @click="scrollToTop"
     >
       <span class="text-primary text-lg">↑</span>
