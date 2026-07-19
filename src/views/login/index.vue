@@ -119,8 +119,8 @@ const setLoginUser = (user: { id: string; username: string; nickname?: string; a
 
 // 表单数据
 const form = reactive({
-  username: '',
-  password: '',
+  username: 'test',
+  password: 'rks#345',
   rememberMe: false
 })
 
