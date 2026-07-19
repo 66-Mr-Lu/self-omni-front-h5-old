@@ -152,7 +152,7 @@ const showBackButton = computed(() => {
     '/tools/cron-expression',
     '/tools/subscription-convert',
     '/tools/base64-convert',
-    '/download/bilibili',
+    '/resource/bilibili',
     '/profile',
     '/profile/edit'
   ]
@@ -173,7 +173,7 @@ const currentPageTitle = computed(() => {
     '/tools/cron-expression': 'Cron表达式生成器',
     '/tools/subscription-convert': '订阅转换',
     '/tools/base64-convert': 'Base64编解码',
-    '/download/bilibili': 'B站视频下载',
+    '/resource/bilibili': 'B站视频下载',
     '/profile': '个人中心',
     '/profile/edit': '编辑资料'
   }

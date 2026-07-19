@@ -239,11 +239,11 @@ export const menuData: TopCategory[] = [
     ]
   },
   {
-    id: 'download',
-    name: '下载',
-    icon: '⬇️',
-    routePath: 'download',
-    priority: 30,              // 下载优先级第三
+    id: 'resource',
+    name: '资源',
+    icon: '📦',
+    routePath: 'resource',
+    priority: 30,              // 资源优先级第三
     // 直接的叶子菜单（没有二级菜单组）
     items: [
       { 
@@ -252,7 +252,7 @@ export const menuData: TopCategory[] = [
         icon: '📺', 
         action: 'bilibiliDownload', 
         priority: 10, 
-        routePath: '/download/bilibili',
+        routePath: '/resource/bilibili',
         desc: '下载B站视频和音频',
         tags: ['B站', 'bilibili', '视频', '下载', 'Bilibili']
       },
@@ -262,7 +262,7 @@ export const menuData: TopCategory[] = [
         icon: '📋', 
         action: 'videoList', 
         priority: 15, 
-        routePath: '/download/videos',
+        routePath: '/resource/videos',
         desc: '查看已下载的视频列表',
         tags: ['视频', '列表', '播放', '已下载']
       },
@@ -272,7 +272,7 @@ export const menuData: TopCategory[] = [
         icon: '📱', 
         action: 'douyinDownload', 
         priority: 20, 
-        routePath: '/download/douyin',
+        routePath: '/resource/douyin',
         desc: '下载抖音短视频',
         tags: ['抖音', 'douyin', '视频', '下载', 'TikTok']
       }

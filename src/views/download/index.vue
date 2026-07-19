@@ -37,7 +37,7 @@ const appStore = useAppStore()
 
 // 当前分类
 const currentCategory = computed(() => {
-  return menuData.find(cat => cat.id === 'download')
+  return menuData.find(cat => cat.id === 'resource')
 })
 
 // 统一排序后的菜单项
@@ -55,9 +55,9 @@ const handleToggleGroup = (groupId: string) => {
 const handleChildClick = (item: LeafMenu) => {
   // 根据菜单项ID跳转到对应页面
   if (item.id === 'bilibili-download') {
-    router.push('/download/bilibili')
+    router.push('/resource/bilibili')
   } else if (item.id === 'video-list') {
-    router.push('/download/videos')
+    router.push('/resource/videos')
   } else if (item.id === 'douyin-download') {
     // 抖音下载功能暂未实现，显示提示
     showDialog({

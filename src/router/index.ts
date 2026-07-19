@@ -4,7 +4,7 @@ import Home from '@/views/home/index.vue'
 // 导入功能页面（懒加载）
 const OpsPage = () => import('@/views/ops/index.vue')
 const ToolsPage = () => import('@/views/tools/index.vue')
-const DownloadPage = () => import('@/views/download/index.vue')
+const ResourcePage = () => import('@/views/download/index.vue')
 const ControlPage = () => import('@/views/control/index.vue')
 
 // 功能详情页面（懒加载）
@@ -17,7 +17,7 @@ const SubscriptionConvertPage = () => import('@/views/tools/subscription-convert
 const Base64ConvertPage = () => import('@/views/tools/base64-convert.vue')
 const NoteListPage = () => import('@/views/tools/note/NoteList.vue')
 const NoteEditorPage = () => import('@/views/tools/note/NoteEditor.vue')
-const BilibiliDownloadPage = () => import('@/views/download/bilibili.vue')
+const BilibiliResourcePage = () => import('@/views/download/bilibili.vue')
 const VideoListPage = () => import('@/views/download/VideoList.vue')
 const VideoPlayerPage = () => import('@/views/download/VideoPlayer.vue')
 
@@ -59,10 +59,10 @@ const routes: RouteRecordRaw[] = [
         meta: { categoryId: 'tools' }
       },
       {
-        path: 'download',
-        name: 'Download',
-        component: DownloadPage,
-        meta: { categoryId: 'download' }
+        path: 'resource',
+        name: 'Resource',
+        component: ResourcePage,
+        meta: { categoryId: 'resource' }
       },
       {
         path: 'control',
@@ -84,10 +84,10 @@ const routes: RouteRecordRaw[] = [
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {
-        path: 'download/:action',
-        name: 'DownloadFeature',
+        path: 'resource/:action',
+        name: 'ResourceFeature',
         component: FeaturePage,
-        meta: { categoryId: 'download', requiresAuth: false }
+        meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
         path: 'control/:action',
@@ -150,22 +150,22 @@ const routes: RouteRecordRaw[] = [
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {
-        path: 'download/bilibili',
-        name: 'BilibiliDownload',
-        component: BilibiliDownloadPage,
-        meta: { categoryId: 'download', requiresAuth: false }
+        path: 'resource/bilibili',
+        name: 'BilibiliResource',
+        component: BilibiliResourcePage,
+        meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
-        path: 'download/videos',
+        path: 'resource/videos',
         name: 'VideoList',
         component: VideoListPage,
-        meta: { categoryId: 'download', requiresAuth: false }
+        meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
-        path: 'download/video/:id',
+        path: 'resource/video/:id',
         name: 'VideoPlayer',
         component: VideoPlayerPage,
-        meta: { categoryId: 'download', requiresAuth: false }
+        meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
         path: 'profile',
@@ -213,7 +213,7 @@ export const getRouteByCategoryId = (categoryId: string): string => {
   const routeMap: Record<string, string> = {
     ops: '/ops',
     tools: '/tools',
-    download: '/download',
+    resource: '/resource',
     control: '/control'
   }
   return routeMap[categoryId] || '/ops'
