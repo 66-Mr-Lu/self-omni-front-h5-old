@@ -101,7 +101,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import {useRouter, useRoute, onBeforeRouteLeave} from 'vue-router'
 import { getNoteById, createNote, updateNote, type Note, type CreateNoteRequest, type UpdateNoteRequest } from '@/api/note'
 import { showToast, showDialog } from 'vant'
 
@@ -257,26 +257,26 @@ const onContentChange = () => {
  */
 const handleGoBack = async () => {
   // 如果正在保存，不允许返回
-  if (saving.value) return
-  
-  // 如果有未保存的修改，提示用户
-  if (hasUnsavedChanges.value) {
-    showDialog({
-      title: '提示',
-      message: '笔记内容已修改，是否保存？',
-      showCancelButton: true,
-      confirmButtonText: '保存',
-      cancelButtonText: '不保存'
-    }).then(async () => {
-      await saveNote()
-      router.back()
-    }).catch(() => {
-      // 用户取消保存，直接返回
-      router.back()
-    })
-  } else {
+  // if (saving.value) return
+  //
+  // // 如果有未保存的修改，提示用户
+  // if (hasUnsavedChanges.value) {
+  //   showDialog({
+  //     title: '提示',
+  //     message: '笔记内容已修改，是否保存？',
+  //     showCancelButton: true,
+  //     confirmButtonText: '保存',
+  //     cancelButtonText: '不保存'
+  //   }).then(async () => {
+  //     await saveNote()
+  //     router.back()
+  //   }).catch(() => {
+  //     // 用户取消保存，直接返回
+  //     router.back()
+  //   })
+  // } else {
     router.back()
-  }
+  // }
 }
 
 /**
@@ -432,6 +432,33 @@ const saveNote = async () => {
     saving.value = false
   }
 }
+
+onBeforeRouteLeave(() => {
+  if (saving.value) {
+    return false
+  }
+
+  if (!hasUnsavedChanges.value) {
+    return true
+  }
+
+  return new Promise<boolean>((resolve) => {
+    showDialog({
+      title: '提示',
+      message: '笔记内容已修改，是否保存？',
+      showCancelButton: true,
+      confirmButtonText: '保存',
+      cancelButtonText: '不保存'
+    }).then(async () => {
+      await saveNote()
+      resolve(true)
+    }).catch(() => {
+      resolve(true)
+    })
+  })
+})
+
+
 
 // 页面加载时初始化
 onMounted(() => {
