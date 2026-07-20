@@ -280,10 +280,11 @@ export const menuData: TopCategory[] = [
     groups: []
   },
   {
-    id: 'control',
-    name: '控制',
-    icon: '🌡️',
-    routePath: 'control',
+    id: 'intelligence',
+    name: '智能',
+    // icon: '🌡️',
+    icon: '💡',
+    routePath: 'intelligence',
     priority: 40,              // 控制优先级最低
     // 直接的叶子菜单（没有二级菜单组）
     items: [
@@ -293,7 +294,7 @@ export const menuData: TopCategory[] = [
         icon: '❄️', 
         action: 'airConditioner', 
         priority: 10, 
-        routePath: '/control/air-conditioner',
+        routePath: '/intelligence/air-conditioner',
         desc: '智能空调远程控制',
         tags: ['空调', '温度', '控制', '智能家居']
       }

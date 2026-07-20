@@ -33,7 +33,7 @@ const appStore = useAppStore()
 
 // 当前分类
 const currentCategory = computed(() => {
-  return menuData.find(cat => cat.id === 'control')
+  return menuData.find(cat => cat.id === 'intelligence')
 })
 
 // 统一排序后的菜单项

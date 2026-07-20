@@ -65,10 +65,10 @@ const routes: RouteRecordRaw[] = [
         meta: { categoryId: 'resource' }
       },
       {
-        path: 'control',
-        name: 'Control',
+        path: 'intelligence',
+        name: 'Intelligence',
         component: ControlPage,
-        meta: { categoryId: 'control' }
+        meta: { categoryId: 'intelligence' }
       },
       // 功能详情页路由（包含分类路径）
       {
@@ -90,10 +90,10 @@ const routes: RouteRecordRaw[] = [
         meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
-        path: 'control/:action',
+        path: 'intelligence/:action',
         name: 'ControlFeature',
         component: FeaturePage,
-        meta: { categoryId: 'control', requiresAuth: false }
+        meta: { categoryId: 'intelligence', requiresAuth: false }
       },
       {
         path: 'tools/json-escape-convert',
