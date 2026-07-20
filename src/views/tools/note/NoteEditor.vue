@@ -37,6 +37,18 @@
             <span class="btn-icon">↷</span>
           </button>
           
+          <!-- 复制按钮 -->
+          <button 
+            class="toolbar-btn" 
+            :class="{ disabled: !currentNote.content.trim() || loading }"
+            :disabled="!currentNote.content.trim() || loading"
+            @click="copyContent"
+            title="复制内容"
+          >
+<!--            <span class="btn-icon">📋</span>-->
+            <span class="btn-text">复制</span>
+          </button>
+          
           <!-- 保存按钮 -->
           <button 
             class="toolbar-btn save-btn" 
@@ -199,6 +211,38 @@ const redo = () => {
   const nextState = history.value[historyIndex.value]
   currentNote.value.title = nextState.title
   currentNote.value.content = nextState.content
+}
+
+/**
+ * 复制笔记内容（不包含标题）
+ */
+const copyContent = async () => {
+  const content = currentNote.value.content
+  
+  if (!content.trim()) {
+    showToast({ message: '内容为空', position: 'top' })
+    return
+  }
+  
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(content)
+    } else {
+      // 降级方案：使用临时 textarea + execCommand
+      const textarea = document.createElement('textarea')
+      textarea.value = content
+      textarea.style.position = 'fixed'
+      textarea.style.left = '-9999px'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+    showToast({ message: '已复制', position: 'top' })
+  } catch (error) {
+    console.error('复制失败:', error)
+    showToast({ message: '复制失败', position: 'top' })
+  }
 }
 
 /**
@@ -423,6 +467,13 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+
+.btn-text {
+  font-size: 14px;
+  line-height: 1;
+  color: #333;
+}
+
 /* 顶部固定工具栏 */
 .editor-toolbar {
   top: 0;

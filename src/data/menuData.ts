@@ -199,7 +199,7 @@ export const menuData: TopCategory[] = [
         name: '记事本', 
         icon: '📒', 
         action: 'note', 
-        priority: 40, 
+        priority: 5,
         routePath: '/tools/note',
         desc: '个人记事本，数据存储在云端',
         tags: ['笔记', '记事本', '备忘录', '云端存储']
