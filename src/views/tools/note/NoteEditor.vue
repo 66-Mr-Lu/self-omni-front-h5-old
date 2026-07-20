@@ -361,11 +361,15 @@ const saveNote = async () => {
       await createNote(params)
       showToast({ message: '创建成功', position: 'top' })
     }
-    
+
+    // 保存成功后更新当前内容和原始内容，避免返回时再次提示
+    currentNote.value.title = currentNote.value.title.trim()
+    currentNote.value.content = currentNote.value.content.trim()
+
     // 保存成功后更新原始内容，避免返回时再次提示
     originalContent.value = { 
-      title: currentNote.value.title.trim(), 
-      content: currentNote.value.content.trim() 
+      title: currentNote.value.title.trim(),
+      content: currentNote.value.content.trim()
     }
     
     // 清理 sessionStorage 中的缓存
