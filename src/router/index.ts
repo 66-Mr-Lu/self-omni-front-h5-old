@@ -150,19 +150,19 @@ const routes: RouteRecordRaw[] = [
         meta: { categoryId: 'tools', requiresAuth: false }
       },
       {
-        path: 'resource/bilibili',
+        path: 'resource/bilibili-download',
         name: 'BilibiliResource',
         component: BilibiliResourcePage,
         meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
-        path: 'resource/videos',
+        path: 'resource/bilibili-videos',
         name: 'VideoList',
         component: VideoListPage,
         meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
-        path: 'resource/video/:id',
+        path: 'resource/bilibili-video/:id',
         name: 'VideoPlayer',
         component: VideoPlayerPage,
         meta: { categoryId: 'resource', requiresAuth: false }

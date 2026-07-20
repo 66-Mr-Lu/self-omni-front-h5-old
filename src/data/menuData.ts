@@ -252,7 +252,7 @@ export const menuData: TopCategory[] = [
         icon: '📺', 
         action: 'bilibiliDownload', 
         priority: 10, 
-        routePath: '/resource/bilibili',
+        routePath: '/resource/bilibili-download',
         desc: '下载B站视频和音频',
         tags: ['B站', 'bilibili', '视频', '下载', 'Bilibili']
       },
@@ -262,7 +262,7 @@ export const menuData: TopCategory[] = [
         icon: '📋', 
         action: 'videoList', 
         priority: 15, 
-        routePath: '/resource/videos',
+        routePath: '/resource/bilibili-videos',
         desc: '查看已下载的视频列表',
         tags: ['视频', '列表', '播放', '已下载']
       },

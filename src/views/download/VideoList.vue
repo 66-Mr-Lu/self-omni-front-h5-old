@@ -208,7 +208,7 @@ const handleToggleFilter = (showDownloaded: boolean) => {
 // 点击视频项，跳转到播放页面
 const handleVideoClick = (video: ListBilibiliVideoInfoResp) => {
   router.push({
-    path: `/download/video/${video.id}`,
+    path: `/resource/bilibili-video/${video.id}`,
     query: {
       videoData: JSON.stringify(video)
     }

@@ -55,9 +55,9 @@ const handleToggleGroup = (groupId: string) => {
 const handleChildClick = (item: LeafMenu) => {
   // 根据菜单项ID跳转到对应页面
   if (item.id === 'bilibili-download') {
-    router.push('/resource/bilibili')
+    router.push('/resource/bilibili-download')
   } else if (item.id === 'video-list') {
-    router.push('/resource/videos')
+    router.push('/resource/bilibili-videos')
   } else if (item.id === 'douyin-download') {
     // 抖音下载功能暂未实现，显示提示
     showDialog({
