@@ -64,8 +64,7 @@
 
     <!-- 内容区域 -->
     <div v-else class="content pt-10 pb-6">
-      <div class="px-4 py-4">
-        <div class="bg-white rounded-xl shadow-sm p-4">
+      <div class="bg-white p-4">
           <!-- 标题输入 -->
           <input 
             v-model="currentNote.title" 
@@ -78,12 +77,11 @@
           <!-- 内容输入 -->
           <textarea 
             v-model="currentNote.content" 
-            class="note-content-textarea w-full h-[calc(100vh-220px)] px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none"
+            class="note-content-textarea w-full h-[calc(100vh-200px)] px-3 py-2 text-sm text-gray-700 resize-none focus:outline-none"
             placeholder="输入内容..."
             @input="onContentChange"
             :disabled="loading"
           ></textarea>
-        </div>
       </div>
     </div>
   </div>
@@ -421,9 +419,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 顶部固定工具栏（位于首页导航栏下方） */
+/* 顶部固定工具栏 */
 .editor-toolbar {
-  top: 48px; /* 首页导航栏高度 */
+  top: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 

@@ -1,7 +1,7 @@
 <template>
   <div class="home-page min-h-screen bg-gray-100 pb-20">
     <!-- 顶部导航栏 -->
-    <div class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
+    <div v-if="!isNoteEditorPage" class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
       <!-- 子页面导航栏样式 -->
       <div v-if="showBackButton" class="flex items-center px-5 h-12">
         <div class="back-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="goBack">
@@ -96,7 +96,7 @@
     ></div>
 
     <!-- 主内容区 - 使用 router-view 显示子页面 -->
-    <div class="content pt-16 px-4 pb-6">
+    <div class="content" :class="isNoteEditorPage ? 'pt-0 pb-0' : 'pt-16 px-4 pb-6'">
       <router-view v-slot="{ Component }">
         <div v-if="Component" class="view-wrapper">
           <transition name="fade" mode="out-in">
@@ -159,6 +159,11 @@ const showBackButton = computed(() => {
   
   // 检查当前路由是否匹配
   return subPagePaths.some(path => route.path.startsWith(path))
+})
+
+// 是否为记事本编辑页面（隐藏顶部导航栏）
+const isNoteEditorPage = computed(() => {
+  return route.path === '/tools/note/create' || route.path.startsWith('/tools/note/edit/')
 })
 
 // 当前页面标题
