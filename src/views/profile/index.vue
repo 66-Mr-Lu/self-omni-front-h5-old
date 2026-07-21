@@ -71,6 +71,7 @@
           </div>
           <div class="flex items-center">
             <span v-if="menu.badge" class="badge bg-red-500 text-white text-xs px-2 py-0.5 rounded-full mr-2">{{ menu.badge }}</span>
+            <span v-if="menu.id === 'subpasswd' && appStore.isSetSubPasswd" class="text-gray-400 text-xs mr-2">已设置</span>
             <span class="text-gray-400 text-base">›</span>
           </div>
         </div>
@@ -82,6 +83,16 @@
         <p class="text-gray-400 text-xs mt-1">一切尽在掌控</p>
       </div>
     </div>
+
+    <!-- 二级密码弹窗 -->
+    <SubPasswdDialog
+      v-model:show="showSubPasswdDialog"
+      :mode="subPasswdDialogMode"
+      :description="subPasswdDescription"
+      :display-password="getSubPasswd(currentUser?.id || '') || ''"
+      @confirm="handleSubPasswdConfirm"
+      @cancel="handleSubPasswdCancel"
+    />
   </div>
 </template>
 
@@ -89,7 +100,9 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { showToast } from 'vant'
+import { showToast, showSuccessToast } from 'vant'
+import SubPasswdDialog from '@/components/SubPasswdDialog.vue'
+import { setSubPasswd, hasLocalSubPasswd, getSubPasswd } from '@/utils/subPasswd'
 
 // 路由
 const router = useRouter()
@@ -117,6 +130,7 @@ const quickActions = [
 
 // 个人中心菜单配置
 const profileMenus = [
+  { id: 'subpasswd', name: '二级密码', icon: '🔑', badge: 0 },
   { id: 'settings', name: '设置', icon: '⚙️', badge: 0 },
   { id: 'theme', name: '主题设置', icon: '🎨', badge: 0 },
   { id: 'notification', name: '消息通知', icon: '🔔', badge: 3 },
@@ -124,14 +138,84 @@ const profileMenus = [
   { id: 'about', name: '关于我们', icon: 'ℹ️', badge: 0 }
 ]
 
+// 二级密码弹窗状态
+const showSubPasswdDialog = ref(false)
+const subPasswdDialogMode = ref<'set' | 'input' | 'display'>('set')
+const subPasswdDescription = ref('')
+
 /**
  * 处理菜单点击
  */
 const handleMenuClick = (menu: { id: string; name: string }) => {
-  showToast({
-    message: `${menu.name}功能开发中`,
-    position: 'top'
-  })
+  switch (menu.id) {
+    case 'subpasswd':
+      handleSubPasswdMenuClick()
+      break
+    case 'about':
+      showToast({
+        message: 'Omni工具箱 v1.0.0',
+        position: 'top'
+      })
+      break
+    default:
+      showToast({
+        message: `${menu.name}功能开发中`,
+        position: 'top'
+      })
+  }
+}
+
+/**
+ * 处理二级密码菜单点击
+ */
+const handleSubPasswdMenuClick = () => {
+  if (!currentUser.value) return
+
+  const userSubPasswdStatus = currentUser.value.isSetSubPasswd
+  const hasLocal = hasLocalSubPasswd(currentUser.value.id)
+
+  if (userSubPasswdStatus === 'N') {
+    // 场景1：后台标记为未设置（N），进入设置模式
+    subPasswdDialogMode.value = 'set'
+    subPasswdDescription.value = '尚未设置二级密码，是否立即设置？（只能设置一次，且无法更改）'
+    showSubPasswdDialog.value = true
+  } else if (userSubPasswdStatus !== 'N' && !hasLocal) {
+    // 场景2：后台标记非N（已设置），但本地未检测到，进入输入模式
+    subPasswdDialogMode.value = 'input'
+    subPasswdDescription.value = '之前已设置，但本地未检测到，请再次输入二级密码'
+    showSubPasswdDialog.value = true
+  } else {
+    // 场景3：已设置且本地有缓存，直接展示二级密码
+    subPasswdDialogMode.value = 'display'
+    subPasswdDescription.value = ''
+    showSubPasswdDialog.value = true
+  }
+}
+
+/**
+ * 处理二级密码确认
+ */
+const handleSubPasswdConfirm = async (password: string) => {
+  if (!currentUser.value) return
+
+  if (subPasswdDialogMode.value === 'set') {
+    // 设置模式：直接保存到本地缓存
+    setSubPasswd(currentUser.value.id, password)
+    showSubPasswdDialog.value = false
+    showSuccessToast('二级密码设置成功')
+  } else if (subPasswdDialogMode.value === 'input') {
+    // 输入模式：直接保存到本地缓存（用于恢复本地缓存）
+    setSubPasswd(currentUser.value.id, password)
+    showSubPasswdDialog.value = false
+    showSuccessToast('二级密码保存成功')
+  }
+}
+
+/**
+ * 处理二级密码取消
+ */
+const handleSubPasswdCancel = () => {
+  showSubPasswdDialog.value = false
 }
 
 /**

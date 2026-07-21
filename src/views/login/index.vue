@@ -108,12 +108,12 @@ const appStore = useAppStore()
 /**
  * 登录成功后设置用户状态
  */
-const setLoginUser = (user: { id: string; username: string; nickname?: string; avatar?: string }) => {
+const setLoginUser = (user: { id: string; username: string; nickname?: string; isSetSubPasswd?: string }) => {
   appStore.setUser({
     id: user.id,
     username: user.username,
     nickname: user.nickname,
-    avatar: user.avatar
+    isSetSubPasswd: user.isSetSubPasswd
   })
 }
 
@@ -191,7 +191,8 @@ const handleLogin = async () => {
       id: response.userId,
       username: response.username,
       nickname: response.nickname,
-      token: response.token
+      token: response.token,
+      isSetSubPasswd: response.isSetSubPasswd
     }
 
     if (form.rememberMe) {
@@ -207,7 +208,8 @@ const handleLogin = async () => {
     setLoginUser({
       id: response.userId,
       username: response.username,
-      nickname: response.nickname
+      nickname: response.nickname,
+      isSetSubPasswd: response.isSetSubPasswd
     })
 
     showToast({

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { hasLocalSubPasswd as checkLocalSubPasswd, clearSubPasswd } from '@/utils/subPasswd'
 
 export const useAppStore = defineStore('app', () => {
   // 应用名称
@@ -28,6 +29,7 @@ export const useAppStore = defineStore('app', () => {
     username: string
     nickname?: string
     avatar?: string
+    isSetSubPasswd?: string
   }
 
   /**
@@ -35,6 +37,21 @@ export const useAppStore = defineStore('app', () => {
    */
   const isLoggedIn = computed(() => {
     return !!currentUser.value
+  })
+
+  /**
+   * 检查是否已设置二级密码（后台标记）
+   */
+  const isSetSubPasswd = computed(() => {
+    return currentUser.value?.isSetSubPasswd === 'Y'
+  })
+
+  /**
+   * 检查本地是否有二级密码
+   */
+  const hasLocalSubPasswd = computed(() => {
+    if (!currentUser.value) return false
+    return checkLocalSubPasswd(currentUser.value.id)
   })
 
   /**
@@ -63,7 +80,8 @@ export const useAppStore = defineStore('app', () => {
           id: user.id || '1',
           username: user.username,
           nickname: user.nickname,
-          avatar: user.avatar
+          avatar: user.avatar,
+          isSetSubPasswd: user.isSetSubPasswd
         }
       }
     } catch (e) {
@@ -85,6 +103,10 @@ export const useAppStore = defineStore('app', () => {
         console.error('调用退出登录接口失败:', error)
         // 接口调用失败不阻止本地退出
       }
+    }
+    // 退出登录时清除本地二级密码
+    if (currentUser.value) {
+      clearSubPasswd(currentUser.value.id)
     }
     currentUser.value = null
     localStorage.removeItem('omni_user')
@@ -142,6 +164,8 @@ export const useAppStore = defineStore('app', () => {
     collapsedGroups,
     currentUser,
     isLoggedIn,
+    isSetSubPasswd,
+    hasLocalSubPasswd,
     getUser,
     setUser,
     loadUserFromStorage,
