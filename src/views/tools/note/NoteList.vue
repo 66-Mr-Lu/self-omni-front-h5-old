@@ -53,23 +53,19 @@
               <span v-if="note.isPinned === 'Y'" class="mr-2 text-yellow-500" title="已置顶">📌</span>
               <h3 class="text-gray-800 font-semibold text-base">{{ note.title || '无标题' }}</h3>
             </div>
-            <div class="flex items-center gap-2">
-              <!-- 置顶/取消置顶按钮 -->
-              <button 
-                class="pin-btn px-2 py-1 rounded-lg text-xs transition-all active:opacity-80"
-                :class="note.isPinned === 'Y' ? 'bg-yellow-50 text-yellow-500' : 'bg-gray-50 text-gray-500'"
-                @click.stop="togglePin(note)"
-                :title="note.isPinned === 'Y' ? '取消置顶' : '置顶'"
-              >
-                <span>{{ note.isPinned === 'Y' ? '取消置顶' : '置顶' }}</span>
-              </button>
-              <button 
-                class="delete-btn px-2 py-1 bg-red-50 text-red-500 rounded-lg text-xs transition-all active:opacity-80"
-                @click.stop="confirmDelete(note.id)"
-              >
-                删除
-              </button>
-            </div>
+            <van-popover 
+              v-model:show="popoverVisible[note.id]" 
+              placement="bottom-end" 
+              :actions="getNoteActions(note)"
+              @select="(action) => handleAction(note, action)"
+              @click-outside="closePopover"
+            >
+              <template #reference>
+                <button class="more-btn w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors" @click.stop="togglePopover(note.id)">
+                  <span class="text-lg font-medium">⋮</span>
+                </button>
+              </template>
+            </van-popover>
           </div>
           <p class="text-gray-600 text-sm line-clamp-2 mb-2">{{ truncateContent(note.content) }}</p>
           <div class="text-xs text-gray-400">{{ formatTime(note.updateAt) }}</div>
@@ -101,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAllNotes, deleteNote, pinNote, unpinNote, type Note, type PageResponse } from '@/api/note'
 import { showToast, showDialog } from 'vant'
@@ -124,6 +120,9 @@ const errorMessage = ref('网络请求失败，请稍后重试')
 
 // 滚动触发元素引用
 const loadMoreTrigger = ref<HTMLElement | null>(null)
+
+// 更多菜单显示状态映射
+const popoverVisible = reactive<Record<string, boolean>>({})
 
 // IntersectionObserver 实例
 let observer: IntersectionObserver | null = null
@@ -259,6 +258,48 @@ const confirmDelete = async (id: string) => {
 }
 
 /**
+ * 切换更多菜单显示状态
+ * @param id 笔记 ID
+ */
+const togglePopover = (id: string) => {
+  popoverVisible[id] = !popoverVisible[id]
+}
+
+/**
+ * 关闭更多菜单
+ */
+const closePopover = () => {
+  Object.keys(popoverVisible).forEach(key => {
+    popoverVisible[key] = false
+  })
+}
+
+/**
+ * 获取笔记操作菜单
+ * @param note 笔记对象
+ */
+const getNoteActions = (note: Note) => {
+  return [
+    { text: note.isPinned === 'Y' ? '取消置顶' : '置顶', value: 'togglePin' },
+    { text: '删除', value: 'delete', danger: true }
+  ]
+}
+
+/**
+ * 处理菜单操作
+ * @param note 笔记对象
+ * @param action 操作对象
+ */
+const handleAction = async (note: Note, action: { value: string }) => {
+  closePopover()
+  if (action.value === 'togglePin') {
+    await togglePin(note)
+  } else if (action.value === 'delete') {
+    confirmDelete(note.id)
+  }
+}
+
+/**
  * 切换置顶状态
  * @param note 笔记对象
  */
@@ -386,12 +427,8 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-.delete-btn {
+.more-btn {
   flex-shrink: 0;
-}
-
-.delete-btn:active {
-  background-color: #fee2e2;
 }
 
 /* 多行文本截断 */

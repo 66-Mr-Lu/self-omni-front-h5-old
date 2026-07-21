@@ -23,7 +23,8 @@ import {
   CellGroup,
   Radio,
   RadioGroup,
-  Stepper
+  Stepper,
+  Popover
 } from 'vant'
 
 const app = createApp(App)
@@ -47,5 +48,6 @@ app.use(CellGroup)
 app.use(Radio)
 app.use(RadioGroup)
 app.use(Stepper)
+app.use(Popover)
 
 app.mount('#app')
