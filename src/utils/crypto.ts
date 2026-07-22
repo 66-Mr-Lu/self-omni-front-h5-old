@@ -106,7 +106,7 @@ export const deriveCryptoKeys = async (password: string, salt: string) => {
 
     // 关键点：派生 512 bits = 64 字节
     const derivedBits = await crypto.subtle.deriveBits(
-        { name: 'PBKDF2', salt: encoder.encode(salt), iterations: 310000, hash: 'SHA-256' },
+        { name: 'PBKDF2', salt: encoder.encode(salt), iterations: 571, hash: 'SHA-256' },
         keyMaterial,
         512
     );

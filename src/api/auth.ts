@@ -17,6 +17,7 @@ export interface LoginResponse {
   nickname: string
   token: string
   isSetSubPasswd: string
+  subPasswdSalt: string
 }
 
 /**
@@ -28,6 +29,7 @@ export interface UserInfo {
   nickname?: string
   avatar?: string
   isSetSubPasswd?: string
+  subPasswdSalt?: string
 }
 
 export interface UpdateRequest {

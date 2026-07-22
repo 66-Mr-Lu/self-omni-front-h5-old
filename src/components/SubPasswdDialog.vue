@@ -79,6 +79,10 @@ import { ref, computed, watch } from 'vue'
 import { Dialog } from 'vant'
 import {update, UpdateRequest} from "@/api/auth.ts";
 import { generateSalt, deriveSigningKeyPair } from "@/utils/crypto.ts";
+import { useAppStore } from '@/stores/app'
+
+// 状态管理
+const appStore = useAppStore()
 
 // 注册 Vant 组件
 const [vanDialog] = [Dialog]
@@ -250,6 +254,12 @@ const handleConfirm = async () => {
     }
     // 调用更新接口
     await update(updateParams)
+
+    appStore.$patch((state) => {
+      if (state.currentUser) {
+        state.currentUser.subPasswdSalt = salt;
+      }
+    });
 
     emit('confirm', password.value)
   } else if (props.mode === 'input') {

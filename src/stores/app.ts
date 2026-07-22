@@ -30,6 +30,7 @@ export const useAppStore = defineStore('app', () => {
     nickname?: string
     avatar?: string
     isSetSubPasswd?: string
+    subPasswdSalt?: string
   }
 
   /**
@@ -81,7 +82,8 @@ export const useAppStore = defineStore('app', () => {
           username: user.username,
           nickname: user.nickname,
           avatar: user.avatar,
-          isSetSubPasswd: user.isSetSubPasswd
+          isSetSubPasswd: user.isSetSubPasswd,
+          subPasswdSalt: user.subPasswdSalt
         }
       }
     } catch (e) {
