@@ -104,10 +104,16 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getNoteById, createNote, updateNote, type Note, type CreateNoteRequest, type UpdateNoteRequest } from '@/api/note'
 import { showToast, showDialog } from 'vant'
+import { useAppStore } from '@/stores/app'
+import { getSubPasswd } from '@/utils/subPasswd'
+import { decryptAndVerifyNote, encryptAndSignNote } from '@/utils/crypto'
 
 // 路由
 const router = useRouter()
 const route = useRoute()
+
+// 状态管理
+const appStore = useAppStore()
 
 // 状态
 const isEdit = ref(false) // 是否编辑模式
@@ -115,10 +121,11 @@ const noteId = ref('') // 笔记ID
 const loading = ref(false) // 页面加载状态
 const saving = ref(false) // 保存状态
 
-const currentNote = ref<{ id: string; title: string; content: string }>({
+const currentNote = ref<{ id: string; title: string; content: string; isEncrypted: string; iv?: string; signature?: string }>({
   id: '',
   title: '',
-  content: ''
+  content: '',
+  isEncrypted: 'N'
 })
 
 // 撤销/重做历史（最大50步）
@@ -280,6 +287,36 @@ const handleGoBack = async () => {
 }
 
 /**
+ * 解密笔记内容
+ * @param note 笔记对象
+ * @returns 解密后的笔记内容
+ */
+const decryptNoteContent = async (note: Note): Promise<string> => {
+  if (note.isEncrypted !== 'Y' || !note.iv) {
+    return note.content
+  }
+  
+  const user = appStore.getUser()
+  if (!user) {
+    throw new Error('请先登录')
+  }
+  
+  const subPasswd = getSubPasswd(user.id)
+  if (!subPasswd) {
+    throw new Error('请先设置二级密码')
+  }
+  
+  const salt = user.subPasswdSalt || 'omni_default_salt'
+  
+  try {
+    return await decryptAndVerifyNote(note.iv, note.content, subPasswd, salt)
+  } catch (error) {
+    console.error('解密笔记失败:', error)
+    throw new Error('解密失败，请检查二级密码')
+  }
+}
+
+/**
  * 加载笔记详情
  */
 const loadNoteDetail = async () => {
@@ -287,18 +324,25 @@ const loadNoteDetail = async () => {
   
   try {
     const note = await getNoteById(noteId.value)
+    
+    // 解密加密内容
+    const decryptedContent = await decryptNoteContent(note)
+    
     currentNote.value = {
       id: note.id,
       title: note.title,
-      content: note.content
+      content: decryptedContent,
+      isEncrypted: note.isEncrypted || 'N',
+      iv: note.iv,
+      signature: note.signature
     }
     // 初始化历史记录
-    history.value = [{ title: note.title, content: note.content }]
+    history.value = [{ title: note.title, content: decryptedContent }]
     historyIndex.value = 0
-    originalContent.value = { title: note.title, content: note.content }
+    originalContent.value = { title: note.title, content: decryptedContent }
   } catch (error) {
     console.error('加载笔记失败:', error)
-    showToast({ message: '加载笔记失败', position: 'top' })
+    showToast({ message: error instanceof Error ? error.message : '加载笔记失败', position: 'top' })
     setTimeout(() => {
       router.back()
     }, 1500)
@@ -314,7 +358,8 @@ const initNewNote = () => {
   currentNote.value = {
     id: '',
     title: '',
-    content: ''
+    content: '',
+    isEncrypted: 'N'
   }
   // 初始化历史记录
   history.value = [{ title: '', content: '' }]
@@ -325,14 +370,20 @@ const initNewNote = () => {
 /**
  * 从路由状态加载笔记数据（避免重复请求）
  */
-const loadNoteFromRouteState = () => {
+const loadNoteFromRouteState = async (): Promise<boolean> => {
   // Vue Router 4.x 中，state 需要通过 window.history.state 获取
   const noteData = (window.history.state as any)?.noteData as Note | undefined
   if (noteData) {
+    // 解密加密内容
+    // const decryptedContent = await decryptNoteContent(noteData)
+    
     currentNote.value = {
       id: noteData.id,
       title: noteData.title,
-      content: noteData.content
+      content: noteData.content,
+      isEncrypted: noteData.isEncrypted || 'N',
+      iv: noteData.iv,
+      signature: noteData.signature
     }
     // 初始化历史记录
     history.value = [{ title: noteData.title, content: noteData.content }]
@@ -347,15 +398,21 @@ const loadNoteFromRouteState = () => {
     if (cachedNote) {
       try {
         const parsedNote = JSON.parse(cachedNote) as Note
+        // 解密加密内容
+        const decryptedContent = await decryptNoteContent(parsedNote)
+        
         currentNote.value = {
           id: parsedNote.id,
           title: parsedNote.title,
-          content: parsedNote.content
+          content: decryptedContent,
+          isEncrypted: parsedNote.isEncrypted || 'N',
+          iv: parsedNote.iv,
+          signature: parsedNote.signature
         }
         // 初始化历史记录
-        history.value = [{ title: parsedNote.title, content: parsedNote.content }]
+        history.value = [{ title: parsedNote.title, content: decryptedContent }]
         historyIndex.value = 0
-        originalContent.value = { title: parsedNote.title, content: parsedNote.content }
+        originalContent.value = { title: parsedNote.title, content: decryptedContent }
         return true
       } catch (error) {
         console.error('解析缓存笔记失败:', error)
@@ -364,6 +421,27 @@ const loadNoteFromRouteState = () => {
   }
   
   return false
+}
+
+/**
+ * 加密笔记内容
+ * @param content 明文内容
+ * @returns 加密结果
+ */
+const encryptNoteContent = async (content: string): Promise<{ content: string; iv: string; signature: string }> => {
+  const user = appStore.getUser()
+  if (!user) {
+    throw new Error('请先登录')
+  }
+  
+  const subPasswd = getSubPasswd(user.id)
+  if (!subPasswd) {
+    throw new Error('请先设置二级密码')
+  }
+  
+  const salt = user.subPasswdSalt || 'omni_default_salt'
+  
+  return await encryptAndSignNote(content, subPasswd, salt)
 }
 
 /**
@@ -387,33 +465,52 @@ const saveNote = async () => {
   saving.value = true
 
   try {
+    const title = currentNote.value.title.trim()
+    const content = currentNote.value.content.trim()
+    
     if (isEdit.value) {
       // 更新笔记
-      const params: UpdateNoteRequest = {
+      let params: UpdateNoteRequest = {
         id: currentNote.value.id,
-        title: currentNote.value.title.trim(),
-        content: currentNote.value.content.trim()
+        title,
+        content
       }
+      
+      // 如果是加密状态，对内容进行加密
+      if (currentNote.value.isEncrypted === 'Y') {
+        const encrypted = await encryptNoteContent(content)
+        params = {
+          ...params,
+          content: encrypted.content,
+          isEncrypted: 'Y',
+          iv: encrypted.iv,
+          signature: encrypted.signature
+        }
+      } else {
+        params.isEncrypted = 'N'
+      }
+      
       await updateNote(params)
       showToast({ message: '保存成功', position: 'top' })
     } else {
-      // 创建笔记
+      // 创建笔记（新创建的笔记默认不加密）
       const params: CreateNoteRequest = {
-        title: currentNote.value.title.trim(),
-        content: currentNote.value.content.trim()
+        title,
+        content,
+        isEncrypted: 'N'
       }
       await createNote(params)
       showToast({ message: '创建成功', position: 'top' })
     }
 
     // 保存成功后更新当前内容和原始内容，避免返回时再次提示
-    currentNote.value.title = currentNote.value.title.trim()
-    currentNote.value.content = currentNote.value.content.trim()
+    currentNote.value.title = title
+    currentNote.value.content = content
 
     // 保存成功后更新原始内容，避免返回时再次提示
     originalContent.value = { 
-      title: currentNote.value.title.trim(),
-      content: currentNote.value.content.trim()
+      title,
+      content
     }
     
     // 清理 sessionStorage 中的缓存
@@ -427,14 +524,14 @@ const saveNote = async () => {
     // }, 500)
   } catch (error) {
     console.error('保存笔记失败:', error)
-    showToast({ message: '保存失败', position: 'top' })
+    showToast({ message: error instanceof Error ? error.message : '保存失败', position: 'top' })
   } finally {
     saving.value = false
   }
 }
 
 // 页面加载时初始化
-onMounted(() => {
+onMounted(async () => {
   // 强制滚动到页面顶部，避免从列表页面滚动后进入编辑页面时位置偏移
   window.scrollTo(0, 0)
   
@@ -446,7 +543,7 @@ onMounted(() => {
     noteId.value = route.params.id as string
     
     // 优先从路由状态中获取数据（避免重复请求）
-    const loadedFromState = loadNoteFromRouteState()
+    const loadedFromState = await loadNoteFromRouteState()
     if (!loadedFromState) {
       // 如果没有路由状态数据，才调用接口获取
       loadNoteDetail()

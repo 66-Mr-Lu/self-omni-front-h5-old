@@ -8,6 +8,9 @@ export interface Note {
   createAt: string
   updateAt: string
   isPinned: string // 置顶状态：Y-已置顶，N-未置顶
+  isEncrypted: string // 加密状态：Y-已加密，N-未加密
+  iv?: string // 加密IV（Hex字符串）
+  signature?: string // 加密签名（Hex字符串）
 }
 
 /**
@@ -16,6 +19,9 @@ export interface Note {
 export interface CreateNoteRequest {
   title: string
   content: string
+  isEncrypted?: string // 加密状态：Y-加密，N-不加密
+  iv?: string // 加密IV（Hex字符串）
+  signature?: string // 加密签名（Hex字符串）
 }
 
 /**
@@ -25,6 +31,9 @@ export interface UpdateNoteRequest {
   id: string
   title: string
   content: string
+  isEncrypted?: string // 加密状态：Y-加密，N-不加密
+  iv?: string // 加密IV（Hex字符串）
+  signature?: string // 加密签名（Hex字符串）
 }
 
 /**

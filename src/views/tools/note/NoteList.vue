@@ -99,11 +99,17 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getAllNotes, deleteNote, pinNote, unpinNote, type Note, type PageResponse } from '@/api/note'
+import { getAllNotes, deleteNote, pinNote, unpinNote, updateNote, type Note, type PageResponse, type UpdateNoteRequest } from '@/api/note'
 import { showToast, showDialog } from 'vant'
+import { useAppStore } from '@/stores/app'
+import { getSubPasswd } from '@/utils/subPasswd'
+import { decryptAndVerifyNote, encryptAndSignNote } from '@/utils/crypto'
 
 // 路由
 const router = useRouter()
+
+// 状态管理
+const appStore = useAppStore()
 
 // 分页状态
 const notes = ref<Note[]>([])
@@ -151,12 +157,17 @@ const loadNotes = async (page: number = 1, isLoadMore: boolean = false) => {
       pageSize: pageSize.value
     })
     
+    let records = response.records
+    
+    // 解密加密的笔记内容
+    records = await decryptEncryptedNotes(records)
+    
     if (isLoadMore) {
       // 加载更多，追加数据（使用 MyBatis Plus 的 records 字段）
-      notes.value = [...notes.value, ...response.records]
+      notes.value = [...notes.value, ...records]
     } else {
       // 刷新，替换数据（使用 MyBatis Plus 的 records 字段）
-      notes.value = response.records
+      notes.value = records
     }
     
     total.value = response.total
@@ -215,11 +226,18 @@ const createNewNote = () => {
  */
 const editNote = (note: Note) => {
   // 将笔记数据存储到 sessionStorage，确保刷新页面后仍能获取
-  sessionStorage.setItem(`note_${note.id}`, JSON.stringify(note))
+  // 注意：这里存储的是已解密的内容，但保留原始加密状态字段供编辑器使用
+  const noteData = {
+    ...note,
+    isEncrypted: note.isEncrypted || 'N',
+    iv: note.iv,
+    signature: note.signature
+  }
+  sessionStorage.setItem(`note_${note.id}`, JSON.stringify(noteData))
   
   router.push({
     path: `/tools/note/edit/${note.id}`,
-    state: { noteData: JSON.parse(JSON.stringify(note)) }
+    state: { noteData: JSON.parse(JSON.stringify(noteData)) }
   })
 }
 
@@ -275,12 +293,97 @@ const closePopover = () => {
 }
 
 /**
+ * 解密加密的笔记内容
+ * @param notes 笔记列表
+ * @returns 解密后的笔记列表
+ */
+const decryptEncryptedNotes = async (notes: Note[]): Promise<Note[]> => {
+  const user = appStore.getUser()
+  if (!user) return notes
+  
+  const subPasswd = getSubPasswd(user.id)
+  if (!subPasswd) return notes
+  
+  const salt = user.subPasswdSalt || 'omni_default_salt'
+  
+  for (const note of notes) {
+    if (note.isEncrypted === 'Y' && note.iv) {
+      try {
+        note.content = await decryptAndVerifyNote(note.iv, note.content, subPasswd, salt)
+      } catch (error) {
+        console.error('解密笔记失败:', error)
+        note.content = '[解密失败]'
+      }
+    }
+  }
+  
+  return notes
+}
+
+/**
+ * 切换笔记加密状态
+ * @param note 笔记对象
+ */
+const toggleEncryption = async (note: Note) => {
+  const user = appStore.getUser()
+  if (!user) {
+    showToast({ message: '请先登录', position: 'top' })
+    return
+  }
+  
+  const subPasswd = getSubPasswd(user.id)
+  if (!subPasswd) {
+    showToast({ message: '请先设置二级密码', position: 'top' })
+    return
+  }
+  
+  const salt = user.subPasswdSalt || 'omni_default_salt'
+  
+  try {
+    if (note.isEncrypted === 'Y') {
+      // 取消加密：发送解密后的内容，isEncrypted设为N
+      const params: UpdateNoteRequest = {
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        isEncrypted: 'N'
+      }
+      await updateNote(params)
+      note.isEncrypted = 'N'
+      note.iv = undefined
+      note.signature = undefined
+      showToast({ message: '已取消加密', position: 'top' })
+    } else {
+      // 加密：对内容进行加密后发送
+      const encrypted = await encryptAndSignNote(note.content, subPasswd, salt)
+      const params: UpdateNoteRequest = {
+        id: note.id,
+        title: note.title,
+        content: encrypted.content,
+        isEncrypted: 'Y',
+        iv: encrypted.iv,
+        signature: encrypted.signature
+      }
+      await updateNote(params)
+      note.isEncrypted = 'Y'
+      note.iv = encrypted.iv
+      note.signature = encrypted.signature
+      showToast({ message: '已加密', position: 'top' })
+    }
+  } catch (error) {
+    console.error('加密操作失败:', error)
+    showToast({ message: '操作失败', position: 'top' })
+  }
+}
+
+/**
  * 获取笔记操作菜单
  * @param note 笔记对象
  */
 const getNoteActions = (note: Note) => {
   return [
     { text: note.isPinned === 'Y' ? '取消置顶' : '置顶', value: 'togglePin' },
+    { text: note.isEncrypted === 'Y' ? '取消加密' : '加密', value: 'toggleEncryption' },
     { text: '删除', value: 'delete', danger: true }
   ]
 }
@@ -294,6 +397,8 @@ const handleAction = async (note: Note, action: { value: string }) => {
   closePopover()
   if (action.value === 'togglePin') {
     await togglePin(note)
+  } else if (action.value === 'toggleEncryption') {
+    await toggleEncryption(note)
   } else if (action.value === 'delete') {
     confirmDelete(note.id)
   }

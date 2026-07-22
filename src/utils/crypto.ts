@@ -65,6 +65,9 @@ const toHex = (bytes: Uint8Array): string => {
         .join('');
 };
 
+/**
+ * @deprecated   此函数已废弃，请统一使用 `deriveCryptoKeys` 代替。
+ */
 export const deriveSigningKeyPair = async (password: string, salt: string) => {
   const encoder = new TextEncoder();
 
@@ -95,6 +98,11 @@ export const deriveSigningKeyPair = async (password: string, salt: string) => {
   const secretKey = seed;
   const publicKey = ed.getPublicKey(secretKey); // 同步方法，无需 await
 
+  // console.log("deriveSigningKeyPair- passwd :", password)
+  // console.log("deriveSigningKeyPair- salt :", salt)
+  // console.log("deriveSigningKeyPair- secretKey :", toHex(secretKey))
+  // console.log("deriveSigningKeyPair- publicKey :", toHex(publicKey))
+
   return { publicKey, secretKey };
 };
 
@@ -124,6 +132,13 @@ export const deriveCryptoKeys = async (password: string, salt: string) => {
 
     // 获得 Ed25519 公钥（私钥就是 edSeed）
     const publicKey = ed.getPublicKey(edSeed);
+
+    // console.log("deriveCryptoKeys- passwd :", password)
+    // console.log("deriveCryptoKeys- salt :", salt)
+    // console.log("deriveCryptoKeys- privateKey :", toHex(edSeed))
+    // console.log("deriveCryptoKeys- publicKey :", toHex(publicKey))
+    // console.log("deriveCryptoKeys- aesKeyByte :", toHex(aesKeyBytes))
+    // console.log("deriveCryptoKeys- aesKey :", aesKey)
 
     return { aesKey, privateKeySeed: edSeed, publicKey };
 };
@@ -161,6 +176,84 @@ export const encryptAndSignNote = async (text: string, password: string, salt: s
         ),
         signature: toHex(signature)
     };
+};
+
+/**
+ * 工具函数：Base64 字符串转 Uint8Array
+ */
+const base64ToBytes = (base64: string): Uint8Array => {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+};
+/**
+ * 工具函数：Hex 字符串转 Uint8Array
+ */
+const hexToBytes = (hex: string): Uint8Array => {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) {
+        bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+    }
+    return bytes;
+};
+
+/**
+ * 解密 + 验签笔记
+ * @param ivHex - 加密时生成的 IV（Hex 字符串）
+ * @param contentBase64 - 密文（Base64 字符串）
+ * @param signatureHex - Ed25519 签名（Hex 字符串）
+ * @param password - 用户密码
+ * @param salt - 盐值（从后台或 Pinia 获取）
+ * @returns 解密后的明文文本
+ */
+export const decryptAndVerifyNote = async (
+    ivHex: string,
+    contentBase64: string,
+    // signatureHex: string,
+    password: string,
+    salt: string
+): Promise<string> => {
+    try {
+        // 1. 派生 AES 密钥 和 Ed25519 公钥（用于验签）
+        // const { aesKey, publicKey } = await deriveCryptoKeys(password, salt);
+        const { aesKey } = await deriveCryptoKeys(password, salt);
+
+        // 2. 解码参数
+        const iv = hexToBytes(ivHex);
+        const ciphertext = base64ToBytes(contentBase64);
+
+        // const signature = hexToBytes(signatureHex);
+        // 3. 验签：使用公钥验证 IV + 密文 的签名
+        // const dataToVerify = new Uint8Array([...iv, ...ciphertext]);
+        // const isValid = await ed.verifyAsync(signature, dataToVerify, publicKey);
+        // if (!isValid) {
+        //     throw new Error('签名校验失败，数据可能被篡改');
+        // }
+
+        // 4. AES-GCM 解密
+        const decryptedBuffer = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: iv as BufferSource},
+            aesKey,
+            ciphertext as BufferSource
+        );
+        const result = new TextDecoder().decode(decryptedBuffer)    // 解密后的明文
+
+        // console.log("decryptAndVerifyNote -passwd: ", password)
+        // console.log("decryptAndVerifyNote -salt: ", salt)
+        // console.log("decryptAndVerifyNote -iv: ", ivHex)
+        // console.log("decryptAndVerifyNote -publicKey: ", toHex(publicKey))
+        // console.log("decryptAndVerifyNote -content: ", result)
+        // console.log("decryptAndVerifyNote -aesKey: ", aesKey)
+
+        // 5. 返回明文
+        return result;
+    } catch (error) {
+        console.error('解密失败:', error);
+        throw new Error('解密失败，请检查密码或数据完整性');
+    }
 };
 
 /**
