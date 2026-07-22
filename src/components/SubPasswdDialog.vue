@@ -151,8 +151,8 @@ const showError = ref(false)
  */
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    password.value = ''
-    confirmPassword.value = ''
+    password.value = '123456'
+    confirmPassword.value = '123456'
     errors.value = { password: '', confirmPassword: '' }
     showError.value = false
   }
@@ -251,7 +251,7 @@ const handleConfirm = async () => {
       isSetSubPasswd: 'Y',
       subPasswdPublicKey: publicKeyHex,
       subPasswdSalt: salt,
-      subPasswd: password.value // 先存后台，后面就传空串
+      subPasswd: undefined
     }
     // 调用更新接口
     await update(updateParams)

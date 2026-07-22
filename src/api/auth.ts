@@ -36,7 +36,7 @@ export interface UpdateRequest {
   isSetSubPasswd: string
   subPasswdPublicKey: string
   subPasswdSalt: string
-  subPasswd: string
+  subPasswd?: string  // 加个 ? 变为可选，如果没加就是必填
 }
 
 /**
