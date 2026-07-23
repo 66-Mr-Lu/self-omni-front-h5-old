@@ -154,16 +154,18 @@ const showBackButton = computed(() => {
     '/tools/base64-convert',
     '/resource/bilibili-download',
     '/profile',
-    '/profile/edit'
+    '/profile/edit',
+    '/ops/remote-power'
   ]
   
   // 检查当前路由是否匹配
   return subPagePaths.some(path => route.path.startsWith(path))
 })
 
-// 是否为记事本编辑页面（隐藏顶部导航栏）
+// 是否为编辑器页面（隐藏顶部导航栏）
 const isNoteEditorPage = computed(() => {
-  return route.path === '/tools/note/create' || route.path.startsWith('/tools/note/edit/')
+  return route.path === '/tools/note/create' || route.path.startsWith('/tools/note/edit/') ||
+         route.path === '/ops/remote-power/create' || route.path.startsWith('/ops/remote-power/edit/')
 })
 
 // 当前页面标题
@@ -180,7 +182,10 @@ const currentPageTitle = computed(() => {
     '/tools/base64-convert': 'Base64编解码',
     '/resource/bilibili-download': 'B站视频下载',
     '/profile': '个人中心',
-    '/profile/edit': '编辑资料'
+    '/profile/edit': '编辑资料',
+    '/ops/remote-power': '远程唤醒',
+    '/ops/remote-power/create': '添加设备',
+    '/ops/remote-power/edit': '编辑设备'
   }
   
   // 查找匹配的标题

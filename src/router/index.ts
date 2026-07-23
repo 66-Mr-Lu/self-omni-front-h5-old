@@ -17,6 +17,9 @@ const SubscriptionConvertPage = () => import('@/views/tools/subscription-convert
 const Base64ConvertPage = () => import('@/views/tools/base64-convert.vue')
 const NoteListPage = () => import('@/views/tools/note/NoteList.vue')
 const NoteEditorPage = () => import('@/views/tools/note/NoteEditor.vue')
+// 远程唤醒页面（懒加载）
+const DeviceListPage = () => import('@/views/ops/device/DeviceList.vue')
+const DeviceEditorPage = () => import('@/views/ops/device/DeviceEditor.vue')
 const BilibiliResourcePage = () => import('@/views/download/bilibili.vue')
 const VideoListPage = () => import('@/views/download/VideoList.vue')
 const VideoPlayerPage = () => import('@/views/download/VideoPlayer.vue')
@@ -148,6 +151,25 @@ const routes: RouteRecordRaw[] = [
         name: 'NoteEdit',
         component: NoteEditorPage,
         meta: { categoryId: 'tools', requiresAuth: false }
+      },
+      // 远程唤醒设备管理路由
+      {
+        path: 'ops/remote-power',
+        name: 'DeviceList',
+        component: DeviceListPage,
+        meta: { categoryId: 'ops', requiresAuth: false }
+      },
+      {
+        path: 'ops/remote-power/create',
+        name: 'DeviceCreate',
+        component: DeviceEditorPage,
+        meta: { categoryId: 'ops', requiresAuth: false }
+      },
+      {
+        path: 'ops/remote-power/edit/:id',
+        name: 'DeviceEdit',
+        component: DeviceEditorPage,
+        meta: { categoryId: 'ops', requiresAuth: false }
       },
       {
         path: 'resource/bilibili-download',

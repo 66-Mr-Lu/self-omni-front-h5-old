@@ -64,7 +64,7 @@ export const menuData: TopCategory[] = [
       },
       { 
         id: 'remote-power', 
-        name: '远程开机', 
+        name: '远程唤醒',
         icon: '🟢', 
         action: 'remotePower', 
         priority: 20, 
