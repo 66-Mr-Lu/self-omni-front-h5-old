@@ -106,7 +106,7 @@ import { getNoteById, createNote, updateNote, type Note, type CreateNoteRequest,
 import { showToast, showDialog } from 'vant'
 import { useAppStore } from '@/stores/app'
 import { getSubPasswd } from '@/utils/subPasswd'
-import { decryptAndVerifyNote, encryptAndSignNote } from '@/utils/crypto'
+import { decryptAndVerifyNoteNew, encryptAndSignNoteNew } from '@/utils/crypto'
 
 // 路由
 const router = useRouter()
@@ -309,7 +309,7 @@ const decryptNoteContent = async (note: Note): Promise<string> => {
   const salt = user.subPasswdSalt || 'omni_default_salt'
   
   try {
-    return await decryptAndVerifyNote(note.iv, note.content, subPasswd, salt)
+    return await decryptAndVerifyNoteNew(note.iv, note.content, subPasswd, salt)
   } catch (error) {
     console.error('解密笔记失败:', error)
     throw new Error('解密失败，请检查二级密码')
@@ -441,7 +441,7 @@ const encryptNoteContent = async (content: string): Promise<{ content: string; i
   
   const salt = user.subPasswdSalt || 'omni_default_salt'
   
-  return await encryptAndSignNote(content, subPasswd, salt)
+  return await encryptAndSignNoteNew(content, subPasswd, salt)
 }
 
 /**

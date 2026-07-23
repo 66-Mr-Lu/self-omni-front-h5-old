@@ -104,7 +104,7 @@ import { getAllNotes, deleteNote, pinNote, unpinNote, updateNote, type Note, typ
 import { showToast, showDialog } from 'vant'
 import { useAppStore } from '@/stores/app'
 import { getSubPasswd } from '@/utils/subPasswd'
-import { decryptAndVerifyNote, encryptAndSignNote } from '@/utils/crypto'
+import { decryptAndVerifyNoteNew, encryptAndSignNoteNew } from '@/utils/crypto'
 
 // 路由
 const router = useRouter()
@@ -310,7 +310,7 @@ const decryptEncryptedNotes = async (notes: Note[]): Promise<Note[]> => {
   for (const note of notes) {
     if (note.isEncrypted === 'Y' && note.iv) {
       try {
-        note.content = await decryptAndVerifyNote(note.iv, note.content, subPasswd, salt)
+        note.content = await decryptAndVerifyNoteNew(note.iv, note.content, subPasswd, salt)
       } catch (error) {
         console.error('解密笔记失败:', error)
         note.content = '[解密失败]'
@@ -356,7 +356,7 @@ const toggleEncryption = async (note: Note) => {
       showToast({ message: '已取消加密', position: 'top' })
     } else {
       // 加密：对内容进行加密后发送
-      const encrypted = await encryptAndSignNote(note.content, subPasswd, salt)
+      const encrypted = await encryptAndSignNoteNew(note.content, subPasswd, salt)
       const params: UpdateNoteRequest = {
         id: note.id,
         title: note.title,

@@ -21,6 +21,7 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.26.0",
+    "@noble/ciphers": "^2.2.0",
     "@noble/ed25519": "^3.1.0",
     "@noble/hashes": "^1.4.0",
     "axios": "^1.16.1",

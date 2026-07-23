@@ -78,7 +78,7 @@
 import { ref, computed, watch } from 'vue'
 import { Dialog } from 'vant'
 import {update, UpdateRequest} from "@/api/auth.ts";
-import {generateSalt, deriveCryptoKeys} from "@/utils/crypto.ts";
+import {generateSalt, deriveCryptoKeysNew} from "@/utils/crypto.ts";
 import { useAppStore } from '@/stores/app'
 
 // 状态管理
@@ -245,7 +245,7 @@ const handleConfirm = async () => {
 
     const salt = generateSalt();
     // const { publicKey } = await deriveSigningKeyPair(password.value, salt);
-    const { publicKey } = await deriveCryptoKeys(password.value, salt);
+    const { publicKey } = await deriveCryptoKeysNew(password.value, salt);
     const publicKeyHex = toHex(publicKey);
     const updateParams: UpdateRequest = {
       isSetSubPasswd: 'Y',

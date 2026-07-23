@@ -306,7 +306,7 @@ export const md5 = (text: string): string => {
  * @param text 明文
  * @returns SHA256 哈希值
  */
-export const sha256 = (text: string): string => {
+export const toSha256 = (text: string): string => {
   return CryptoJS.SHA256(text).toString()
 }
 
@@ -352,3 +352,83 @@ export const deriveTwoKeys = async (password: string, salt: string) => {
 
   return { aesKey, hmacKey };
 }
+
+// ============================================== 新加解密方法 =====================================================================
+import { pbkdf2 } from '@noble/hashes/pbkdf2';
+import { sha256 } from '@noble/hashes/sha256';
+import { utf8ToBytes,randomBytes } from '@noble/ciphers/utils.js';
+import { gcm } from '@noble/ciphers/aes.js';
+
+export const deriveCryptoKeysNew = (password: string, salt: string) => {
+    // 使用 PBKDF2 派生 64 字节（同步，无需 await）
+    const derived = pbkdf2(
+        sha256,
+        utf8ToBytes(password),
+        utf8ToBytes(salt),
+        { c: 571, dkLen: 64 }  // 这里 iterations 可以根据需要调整，建议与设置密码时一致
+    );
+
+    const buffer = new Uint8Array(derived);
+
+    const aesKeyBytes = buffer.slice(0, 32);
+    const edSeed = buffer.slice(32, 64);
+
+    // AES 密钥不需要再导入为 CryptoKey，直接作为 Uint8Array 使用
+    const aesKey = aesKeyBytes; // 纯字节数组
+
+    // Ed25519 公钥（用 @noble/ed25519 的 getPublicKey 同步方法）
+    const publicKey = ed.getPublicKey(edSeed);
+
+    // console.log("deriveCryptoKeysNew- passwd :", password)
+    // console.log("deriveCryptoKeysNew- salt :", salt)
+    // console.log("deriveCryptoKeysNew- privateKey :", toHex(edSeed))
+    // console.log("deriveCryptoKeysNew- publicKey :", toHex(publicKey))
+    // console.log("deriveCryptoKeysNew- aesKeyByte :", toHex(aesKeyBytes))
+    // console.log("deriveCryptoKeysNew- aesKey :", aesKey)
+
+    return { aesKey, privateKeySeed: edSeed, publicKey };
+};
+
+export const encryptAndSignNoteNew = (text: string, password: string, salt: string) => {
+    const { aesKey, privateKeySeed } = deriveCryptoKeysNew(password, salt);
+
+    // 生成 12 字节随机 IV
+    const iv = randomBytes(12); // 或 crypto.getRandomValues(new Uint8Array(12))
+
+    // 使用 @noble/ciphers 的 AES-GCM 加密
+    const cipher = gcm(aesKey, iv);
+    const plaintext = utf8ToBytes(text);
+    const ciphertext = cipher.encrypt(plaintext);
+
+    // 签名 (IV + 密文)
+    const dataToSign = new Uint8Array([...iv, ...ciphertext]);
+    const signature = ed.sign(dataToSign, privateKeySeed);
+
+    return {
+        iv: toHex(iv),
+        content: btoa(
+            Array.from(ciphertext)
+                .map(byte => String.fromCharCode(byte))
+                .join('')
+        ),
+        signature: toHex(signature)
+    };
+};
+
+export const decryptAndVerifyNoteNew = (
+    ivHex: string,
+    contentHex: string,
+    password: string,
+    salt: string
+) => {
+    // const { aesKey, publicKey } = deriveCryptoKeysNew(password, salt);
+    const { aesKey } = deriveCryptoKeysNew(password, salt);
+
+    const iv = hexToBytes(ivHex);
+    const ciphertext = base64ToBytes(contentHex);
+
+    // 解密
+    const cipher = gcm(aesKey, iv);
+    const plaintext = cipher.decrypt(ciphertext);
+    return new TextDecoder().decode(plaintext);
+};
