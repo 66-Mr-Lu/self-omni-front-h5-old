@@ -196,18 +196,18 @@ const saveDevice = async () => {
     if (isEdit.value) {
       const params: UpdateDeviceRequest = {
         id: deviceId.value,
-        name: formData.value.name.trim() || undefined,
+        name: formData.value.name?.trim() || undefined,
         ip: formData.value.ip.trim(),
-        port: formData.value.port.trim(),
+        port: formData.value.port?.toString().trim(),
         mac: formData.value.mac.trim()
       }
       await updateDevice(params)
       showToast({ message: '更新成功', position: 'top' })
     } else {
       const params: CreateDeviceRequest = {
-        name: formData.value.name.trim() || undefined,
+        name: formData.value.name?.trim() || undefined,
         ip: formData.value.ip.trim(),
-        port: formData.value.port.trim(),
+        port: formData.value.port?.toString().trim(),
         mac: formData.value.mac.trim()
       }
       const createResp = await createDevice(params)
