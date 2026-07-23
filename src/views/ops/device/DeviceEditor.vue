@@ -51,10 +51,11 @@
           <input 
             v-model="formData.ip" 
             class="form-input"
-            placeholder="请输入设备IP地址"
+            placeholder="请输入设备IP地址（支持域名）"
             :disabled="loading"
+            @blur="validateField('ip')"
           />
-          <span v-if="!formData.ip && showValidation" class="error-text">IP地址不能为空</span>
+          <span v-if="fieldErrors.ip" class="error-text">{{ fieldErrors.ip }}</span>
         </div>
         
         <div class="form-item">
@@ -64,8 +65,9 @@
             class="form-input"
             placeholder="请输入端口号"
             :disabled="loading"
+            @blur="validateField('port')"
           />
-          <span v-if="!formData.port && showValidation" class="error-text">端口号不能为空</span>
+          <span v-if="fieldErrors.port" class="error-text">{{ fieldErrors.port }}</span>
         </div>
         
         <div class="form-item">
@@ -75,8 +77,9 @@
             class="form-input"
             placeholder="请输入MAC地址"
             :disabled="loading"
+            @blur="validateField('mac')"
           />
-          <span v-if="!formData.mac && showValidation" class="error-text">MAC地址不能为空</span>
+          <span v-if="fieldErrors.mac" class="error-text">{{ fieldErrors.mac }}</span>
         </div>
       </div>
     </div>
@@ -123,7 +126,6 @@ const deviceId = ref('')
 const loading = ref(false)
 const saving = ref(false)
 const waking = ref(false)
-const showValidation = ref(false)
 
 const formData = ref({
   name: '',
@@ -138,6 +140,86 @@ const originalData = ref({
   port: '',
   mac: ''
 })
+
+// 新增：字段错误信息
+const fieldErrors = ref({
+  ip: '',
+  port: '',
+  mac: ''
+})
+
+// 新增：校验 IP 或域名
+const isValidIPOrDomain = (value: string): boolean => {
+  // 1. 校验 IPv4（严格分段）
+  const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
+  if (ipv4Regex.test(value)) {
+    const parts = value.split('.')
+    for (const part of parts) {
+      const num = Number(part)
+      if (isNaN(num) || num < 0 || num > 255) return false
+    }
+    return true
+  }
+
+  // 2. 校验域名（允许子域名，顶级域至少2个字母）
+  // 规则：总长≤253，不能以连字符开头或结尾，每个标签≤63，至少含一个点
+  const domainRegex = /^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$/
+  return domainRegex.test(value)
+}
+
+// 新增：校验单个字段（由 blur 和保存时调用）
+const validateField = (field: 'ip' | 'port' | 'mac'): boolean => {
+  // 获取值，转为字符串并去除首尾空格
+  const rawValue = formData.value[field]
+  const value = rawValue?.toString().trim() || ''
+
+  let error = ''
+
+  // 1. 必填校验
+  if (!value) {
+    const labels = { ip: 'IP地址', port: '端口号', mac: 'MAC地址' }
+    error = `${labels[field]}不能为空`
+  } else {
+    // 2. 格式校验（仅对非空值）
+    if (field === 'ip') {
+      if (!isValidIPOrDomain(value)) {
+        error = '请输入有效的IP地址或域名'
+      }
+    } else if (field === 'port') {
+      if (!/^\d+$/.test(value)) {
+        error = '端口号必须为数字'
+      } else {
+        const portNum = Number(value)
+        if (portNum < 1 || portNum > 65535) {
+          error = '端口号范围应为 1 ~ 65535'
+        }
+      }
+    } else if (field === 'mac') {
+      // 移除所有分隔符（: 或 -），然后检查是否为 12 位十六进制字符
+      const cleaned = value.replace(/[:-]/g, '')
+      if (!/^[0-9A-Fa-f]{12}$/.test(cleaned)) {
+        error = '请输入有效的MAC地址（例如 AA:BB:CC:DD:EE:FF 或 AABBCCDDEEFF）'
+      }
+    }
+  }
+
+  // 更新错误信息
+  fieldErrors.value[field] = error
+  return !error // 无错误则返回 true
+}
+
+// 修改保存时的整体校验
+const validateForm = (): boolean => {
+  // 校验所有必填字段，并收集结果
+  const fields: ('ip' | 'port' | 'mac')[] = ['ip', 'port', 'mac']
+  let allValid = true
+  for (const field of fields) {
+    if (!validateField(field)) {
+      allValid = false
+    }
+  }
+  return allValid
+}
 
 const handleGoBack = () => {
   if (saving.value || waking.value) return
@@ -166,26 +248,27 @@ const handleGoBack = () => {
   }
 }
 
-const validateForm = (): boolean => {
-  showValidation.value = true
-  
-  if (!formData.value.ip.trim()) {
-    showToast({ message: '请输入IP地址', position: 'top' })
-    return false
-  }
-  
-  if (!formData.value.port.trim()) {
-    showToast({ message: '请输入端口号', position: 'top' })
-    return false
-  }
-  
-  if (!formData.value.mac.trim()) {
-    showToast({ message: '请输入MAC地址', position: 'top' })
-    return false
-  }
-  
-  return true
-}
+// const showValidation = ref(false)
+// const validateForm = (): boolean => {
+//   showValidation.value = true
+//
+//   if (!formData.value.ip.trim()) {
+//     showToast({ message: '请输入IP地址', position: 'top' })
+//     return false
+//   }
+//
+//   if (!formData.value.port.trim()) {
+//     showToast({ message: '请输入端口号', position: 'top' })
+//     return false
+//   }
+//
+//   if (!formData.value.mac.trim()) {
+//     showToast({ message: '请输入MAC地址', position: 'top' })
+//     return false
+//   }
+//
+//   return true
+// }
 
 const saveDevice = async () => {
   if (!validateForm()) return
