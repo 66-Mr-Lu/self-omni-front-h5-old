@@ -67,7 +67,8 @@
               </template>
             </van-popover>
           </div>
-          <p class="text-gray-600 text-sm line-clamp-2 mb-2">{{ truncateContent(note.content) }}</p>
+          <!-- line-clamp     Tailwind CSS 提供的纯 CSS 自动截断， -num 就是实际要展示的行数 -->
+          <p class="text-gray-600 text-sm line-clamp-1 mb-2">{{ note.content }}</p>
           <div class="text-xs text-gray-400">{{ formatTime(note.updateAt) }}</div>
         </div>
         
@@ -430,10 +431,10 @@ const togglePin = async (note: Note) => {
 /**
  * 截断内容预览
  */
-const truncateContent = (content: string, maxLength = 50): string => {
-  if (content.length <= maxLength) return content
-  return content.substring(0, maxLength) + '...'
-}
+// const truncateContent = (content: string, maxLength = 50): string => {
+//   if (content.length <= maxLength) return content
+//   return content.substring(0, maxLength) + '...'
+// }
 
 /**
  * 格式化时间
