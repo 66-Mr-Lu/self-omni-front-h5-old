@@ -499,7 +499,9 @@ const saveNote = async () => {
         content,
         isEncrypted: 'N'
       }
-      await createNote(params)
+      const createResp = await createNote(params)
+      isEdit.value = true
+      currentNote.value.id = createResp.id
       showToast({ message: '创建成功', position: 'top' })
     }
 
