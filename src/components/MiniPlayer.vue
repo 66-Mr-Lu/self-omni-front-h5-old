@@ -1,23 +1,23 @@
 <template>
   <div 
     v-if="musicStore.showMiniPlayer && musicStore.currentSong"
-    class="mini-player fixed bottom-11 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50 px-3 py-1.5"
+    class="mini-player fixed bottom-11 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50 px-4 py-2"
     @click="expandPlayer"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
       <!-- 封面 -->
-      <div class="w-8 h-8 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-        <span class="text-base">🎵</span>
+      <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+        <span class="text-lg">🎵</span>
       </div>
       
       <!-- 歌曲信息 -->
       <div class="flex-1 min-w-0">
-        <h4 class="text-white text-xs truncate">{{ musicStore.currentSong.title }}</h4>
-        <p class="text-white/50 text-[10px] truncate">{{ musicStore.currentSong.artist }}</p>
+        <h4 class="text-white text-sm truncate">{{ musicStore.currentSong.title }}</h4>
+        <p class="text-white/50 text-xs truncate">{{ musicStore.currentSong.artist }}</p>
       </div>
       
       <!-- 进度条 -->
-      <div class="w-12 h-0.5 bg-white/20 rounded-full cursor-pointer relative" @click.stop="seekTo">
+      <div class="w-16 h-1 bg-white/20 rounded-full cursor-pointer relative" @click.stop="seekTo">
         <div 
           class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
           :style="{ width: musicStore.progressPercent + '%' }"
@@ -25,34 +25,34 @@
       </div>
       
       <!-- 控制按钮 -->
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-2">
         <div 
-          class="w-6 h-6 flex items-center justify-center cursor-pointer"
+          class="w-7 h-7 flex items-center justify-center cursor-pointer"
           @click.stop="prevSong"
         >
-          <span class="text-white text-xs">⏮</span>
+          <span class="text-white text-sm">⏮</span>
         </div>
         <div 
-          class="w-7 h-7 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 cursor-pointer"
+          class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 cursor-pointer"
           @click.stop="togglePlay"
         >
-          <span v-if="!musicStore.isPlaying" class="text-white text-xs">▶</span>
-          <span v-else class="text-white text-xs">⏸</span>
+          <span v-if="!musicStore.isPlaying" class="text-white text-base">▶</span>
+          <span v-else class="text-white text-base">⏸</span>
         </div>
         <div 
-          class="w-6 h-6 flex items-center justify-center cursor-pointer"
+          class="w-7 h-7 flex items-center justify-center cursor-pointer"
           @click.stop="nextSong"
         >
-          <span class="text-white text-xs">⏭</span>
+          <span class="text-white text-sm">⏭</span>
         </div>
       </div>
       
       <!-- 关闭按钮 -->
       <div 
-        class="close-btn w-6 h-6 flex items-center justify-center cursor-pointer text-white/60 hover:text-white"
+        class="close-btn w-7 h-7 flex items-center justify-center cursor-pointer text-white/60 hover:text-white"
         @click.stop="closeMiniPlayer"
       >
-        <span class="text-xs">✕</span>
+        <span class="text-sm">✕</span>
       </div>
     </div>
   </div>
