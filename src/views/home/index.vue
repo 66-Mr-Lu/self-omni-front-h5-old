@@ -3,34 +3,34 @@
     <!-- 顶部导航栏 -->
     <div v-if="!isNoteEditorPage" class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
       <!-- 子页面导航栏样式 -->
-      <div v-if="showBackButton" class="flex items-center px-5 h-12">
-        <div class="back-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="goBack">
-          <span class="text-white text-2xl">‹</span>
+      <div v-if="showBackButton" class="flex items-center px-4 h-10">
+        <div class="back-btn w-7 h-7 flex items-center justify-center cursor-pointer" @click="goBack">
+          <span class="text-white text-xl">‹</span>
         </div>
-        <h1 class="text-white text-lg font-semibold mx-3">{{ currentPageTitle }}</h1>
+        <h1 class="text-white text-base font-semibold mx-2">{{ currentPageTitle }}</h1>
       </div>
       <!-- 首页导航栏样式 -->
-      <div v-else class="flex items-center justify-between px-5 h-12">
+      <div v-else class="flex items-center justify-between px-4 h-10">
         <div>
           <h1 class="text-white text-lg font-semibold">{{ appStore.appName }}</h1>
           <p class="text-white text-opacity-80 text-xs">{{ appStore.greeting }}👋</p>
         </div>
         <!-- 右侧按钮组 -->
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2">
           <!-- 全屏按钮 -->
           <button
             @click="toggleFullscreen"
-            class="w-9 h-9 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-opacity"
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-opacity"
           >
-            <span class="text-white text-lg">{{ isFullscreen ? '⛶' : '⛶' }}</span>
+            <span class="text-white text-base">{{ isFullscreen ? '⛶' : '⛶' }}</span>
           </button>
           
           <!-- 搜索按钮 -->
           <button
             @click="showSearch = true"
-            class="w-9 h-9 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-opacity"
+            class="w-8 h-8 flex items-center justify-center rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-opacity"
           >
-            <span class="text-white text-lg">🔍</span>
+            <span class="text-white text-base">🔍</span>
           </button>
           
           <!-- 个人中心入口 -->
@@ -38,7 +38,7 @@
             <button
               @click="handleProfileClick"
               class="flex items-center justify-center transition-opacity"
-              :class="appStore.isLoggedIn ? 'w-9 h-9 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30' : 'px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-sm font-medium'"
+              :class="appStore.isLoggedIn ? 'w-8 h-8 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30' : 'px-2.5 py-1 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 text-xs font-medium'"
             >
               <span v-if="appStore.isLoggedIn" class="text-white">👤</span>
               <span v-else class="text-white">去登录</span>
@@ -96,7 +96,7 @@
     ></div>
 
     <!-- 主内容区 - 使用 router-view 显示子页面 -->
-    <div class="content" :class="isNoteEditorPage ? 'pt-0 pb-0' : 'pt-16 px-4 pb-6'">
+    <div class="content" :class="isNoteEditorPage ? 'pt-0 pb-0' : 'pt-14 px-4 pb-6'">
       <router-view v-slot="{ Component }">
         <div v-if="Component" class="view-wrapper">
           <transition name="fade" mode="out-in">

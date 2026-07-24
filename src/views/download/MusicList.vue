@@ -3,31 +3,31 @@
     <!-- 顶部导航栏 -->
     <div class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 z-50">
       <!-- 搜索状态 -->
-      <div v-if="showSearchBar" class="flex items-center px-4 h-12">
+      <div v-if="showSearchBar" class="flex items-center px-3 h-10">
         <div class="flex-1 relative">
           <input
             v-model="keyword"
             type="text"
             placeholder="搜索音乐..."
-            class="w-full h-9 pl-10 pr-4 rounded-full bg-white/20 text-white text-sm placeholder-white/60 outline-none focus:bg-white/30 transition-colors"
+            class="w-full h-7 pl-9 pr-3 rounded-full bg-white/20 text-white text-xs placeholder-white/60 outline-none focus:bg-white/30 transition-colors"
             @keyup.enter="handleSearch"
           />
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 text-sm">🔍</span>
+          <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/60 text-xs">🔍</span>
         </div>
-        <div class="close-search-btn w-8 h-8 flex items-center justify-center cursor-pointer ml-3" @click="closeSearch">
-          <span class="text-white text-lg">✕</span>
+        <div class="close-search-btn w-7 h-7 flex items-center justify-center cursor-pointer ml-2" @click="closeSearch">
+          <span class="text-white text-base">✕</span>
         </div>
       </div>
       <!-- 正常状态 -->
-      <div v-else class="flex items-center px-5 h-12">
-        <div class="back-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="goBack">
-          <span class="text-white text-xl">‹</span>
+      <div v-else class="flex items-center px-4 h-10">
+        <div class="back-btn w-7 h-7 flex items-center justify-center cursor-pointer" @click="goBack">
+          <span class="text-white text-lg">‹</span>
         </div>
-        <h1 class="text-white text-lg font-semibold mx-3">音乐列表</h1>
-        <div class="ml-auto flex items-center gap-3">
-          <span class="text-white/70 text-sm">{{ total }} 首音乐</span>
-          <div class="search-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="openSearch">
-            <span class="text-white text-lg">🔍</span>
+        <h1 class="text-white text-base font-semibold mx-2">音乐列表</h1>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-white/70 text-xs">{{ total }} 首音乐</span>
+          <div class="search-btn w-7 h-7 flex items-center justify-center cursor-pointer" @click="openSearch">
+            <span class="text-white text-base">🔍</span>
           </div>
         </div>
       </div>
