@@ -1,16 +1,16 @@
 <template>
   <!-- 底部 Tab 导航栏 -->
   <div class="bottom-tab fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50">
-    <div class="flex justify-around items-center h-14">
+    <div class="flex justify-around items-center h-11">
       <div
         v-for="item in tabs"
         :key="item.id"
-        class="tab-item flex flex-col items-center justify-center cursor-pointer py-1 px-3"
+        class="tab-item flex flex-col items-center justify-center cursor-pointer py-0.5 px-2"
         :class="{ 'active': isActive(item.routePath) }"
         @click="handleTabClick(item.routePath)"
       >
-        <span class="text-xl">{{ item.icon }}</span>
-        <span class="text-xs mt-0.5">{{ item.name }}</span>
+        <span class="text-base">{{ item.icon }}</span>
+        <span class="text-[10px] mt-0.5">{{ item.name }}</span>
       </div>
     </div>
     <!-- 安全区域适配 -->

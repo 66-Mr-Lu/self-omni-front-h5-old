@@ -1,5 +1,5 @@
 <template>
-  <div class="home-page min-h-screen bg-gray-100 pb-20">
+  <div class="home-page min-h-screen bg-gray-100 pb-16">
     <!-- 顶部导航栏 -->
     <div v-if="!isNoteEditorPage" class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
       <!-- 子页面导航栏样式 -->
