@@ -1,5 +1,5 @@
 <template>
-  <div class="music-list-page min-h-screen bg-gray-100 pb-12">
+  <div class="music-list-page min-h-screen bg-gray-100 pb-24">
     <!-- 顶部导航栏 -->
     <div class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 z-50">
       <!-- 搜索状态 -->

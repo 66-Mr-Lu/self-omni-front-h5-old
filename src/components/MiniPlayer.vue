@@ -1,7 +1,7 @@
 <template>
   <div 
     v-if="musicStore.showMiniPlayer && musicStore.currentSong"
-    class="mini-player fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50 px-4 py-2"
+    class="mini-player fixed bottom-11 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50 px-4 py-2"
     @click="expandPlayer"
   >
     <div class="flex items-center gap-3">
@@ -17,7 +17,7 @@
       </div>
       
       <!-- 进度条 -->
-      <div class="w-20 h-1 bg-white/20 rounded-full cursor-pointer relative" @click.stop="seekTo">
+      <div class="w-16 h-1 bg-white/20 rounded-full cursor-pointer relative" @click.stop="seekTo">
         <div 
           class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
           :style="{ width: musicStore.progressPercent + '%' }"
@@ -27,24 +27,32 @@
       <!-- 控制按钮 -->
       <div class="flex items-center gap-2">
         <div 
-          class="w-8 h-8 flex items-center justify-center cursor-pointer"
+          class="w-7 h-7 flex items-center justify-center cursor-pointer"
           @click.stop="prevSong"
         >
           <span class="text-white text-sm">⏮</span>
         </div>
         <div 
-          class="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 cursor-pointer"
+          class="w-9 h-9 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 cursor-pointer"
           @click.stop="togglePlay"
         >
-          <span v-if="!musicStore.isPlaying" class="text-white text-lg">▶</span>
-          <span v-else class="text-white text-lg">⏸</span>
+          <span v-if="!musicStore.isPlaying" class="text-white text-base">▶</span>
+          <span v-else class="text-white text-base">⏸</span>
         </div>
         <div 
-          class="w-8 h-8 flex items-center justify-center cursor-pointer"
+          class="w-7 h-7 flex items-center justify-center cursor-pointer"
           @click.stop="nextSong"
         >
           <span class="text-white text-sm">⏭</span>
         </div>
+      </div>
+      
+      <!-- 关闭按钮 -->
+      <div 
+        class="close-btn w-7 h-7 flex items-center justify-center cursor-pointer text-white/60 hover:text-white"
+        @click.stop="closeMiniPlayer"
+      >
+        <span class="text-sm">✕</span>
       </div>
     </div>
   </div>
@@ -89,6 +97,12 @@ const seekTo = (event: MouseEvent) => {
   const percent = (event.clientX - rect.left) / rect.width
   const time = percent * musicStore.duration
   musicStore.setCurrentTime(time)
+}
+
+// 关闭迷你播放器
+const closeMiniPlayer = () => {
+  musicStore.setIsPlaying(false)
+  musicStore.setShowMiniPlayer(false)
 }
 </script>
 
