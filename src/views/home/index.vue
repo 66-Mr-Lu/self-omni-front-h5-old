@@ -111,6 +111,9 @@
 
     <!-- 搜索菜单弹窗 -->
     <SearchMenu v-model:show="showSearch" />
+
+    <!-- 迷你播放器（非播放页面时显示） -->
+    <MiniPlayer v-if="!isMusicPlayerPage" />
   </div>
 </template>
 
@@ -120,6 +123,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import BottomTab from '@/components/BottomTab.vue'
 import SearchMenu from '@/components/SearchMenu.vue'
+import MiniPlayer from '@/components/MiniPlayer.vue'
 import { showToast, showDialog } from 'vant'
 
 // 路由
@@ -166,6 +170,11 @@ const showBackButton = computed(() => {
 const isNoteEditorPage = computed(() => {
   return route.path === '/tools/note/create' || route.path.startsWith('/tools/note/edit/') ||
          route.path === '/ops/remote-power/create' || route.path.startsWith('/ops/remote-power/edit/')
+})
+
+// 是否为音乐播放页面
+const isMusicPlayerPage = computed(() => {
+  return route.path.startsWith('/resource/music-player/')
 })
 
 // 当前页面标题

@@ -23,6 +23,8 @@ const DeviceEditorPage = () => import('@/views/ops/device/DeviceEditor.vue')
 const BilibiliResourcePage = () => import('@/views/download/bilibili.vue')
 const VideoListPage = () => import('@/views/download/VideoList.vue')
 const VideoPlayerPage = () => import('@/views/download/VideoPlayer.vue')
+const MusicPlayerPage = () => import('@/views/download/MusicPlayer.vue')
+const MusicListPage = () => import('@/views/download/MusicList.vue')
 
 // 登录页面（懒加载）
 const LoginPage = () => import('@/views/login/index.vue')
@@ -187,6 +189,18 @@ const routes: RouteRecordRaw[] = [
         path: 'resource/bilibili-video/:id',
         name: 'VideoPlayer',
         component: VideoPlayerPage,
+        meta: { categoryId: 'resource', requiresAuth: false }
+      },
+      {
+        path: 'resource/music-list',
+        name: 'MusicList',
+        component: MusicListPage,
+        meta: { categoryId: 'resource', requiresAuth: false }
+      },
+      {
+        path: 'resource/music-player/:id',
+        name: 'MusicPlayer',
+        component: MusicPlayerPage,
         meta: { categoryId: 'resource', requiresAuth: false }
       },
       {

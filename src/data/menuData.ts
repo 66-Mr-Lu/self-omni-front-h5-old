@@ -257,6 +257,16 @@ export const menuData: TopCategory[] = [
         tags: ['B站', 'bilibili', '视频', '下载', 'Bilibili']
       },
       { 
+        id: 'music-player', 
+        name: '音乐播放', 
+        icon: '🎵', 
+        action: 'musicPlayer', 
+        priority: 12, 
+        routePath: '/resource/music-list',
+        desc: '音乐播放器，支持在线播放和本地音频',
+        tags: ['音乐', '播放器', 'audio', 'music', '播放']
+      },
+      { 
         id: 'video-list', 
         name: '视频列表', 
         icon: '📋', 
