@@ -34,7 +34,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="content pt-14 px-3">
+    <div class="content pt-14 px-2">
       <!-- 加载中状态 -->
       <div v-if="loading" class="flex flex-col items-center justify-center py-20">
         <div class="w-12 h-12 border-3 border-gray-300 border-t-purple-500 rounded-full animate-spin"></div>
@@ -42,43 +42,41 @@
       </div>
 
       <!-- 音乐列表 -->
-      <div v-else-if="musicList.length > 0" class="music-list">
+      <div v-else-if="musicList.length > 0" class="music-list bg-white rounded-xl overflow-hidden">
         <div
-          v-for="music in musicList"
+          v-for="(music, index) in musicList"
           :key="music.id"
-          class="music-item bg-white rounded-xl shadow-sm mb-3 overflow-hidden cursor-pointer"
+          class="music-item flex items-center gap-2.5 cursor-pointer"
+          :class="index !== musicList.length - 1 ? 'border-b border-gray-100' : ''"
           @click="handleMusicClick(music)"
         >
-          <!-- 歌曲信息 -->
-          <div class="p-3 flex items-center gap-3">
-            <!-- 封面/图标 -->
-            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-              <span class="text-xl">🎵</span>
-            </div>
-            
-            <!-- 歌曲详情 -->
-            <div class="flex-1 min-w-0">
-              <h3 class="text-gray-800 font-medium text-sm truncate">{{ music.title }}</h3>
-              <p class="text-gray-500 text-xs mt-1 truncate">{{ music.artist }} - {{ music.album }}</p>
-            </div>
+          <!-- 封面/图标 -->
+          <div class="w-10 h-10 rounded-md bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 mx-2">
+            <span class="text-lg">🎵</span>
+          </div>
+          
+          <!-- 歌曲详情 -->
+          <div class="flex-1 min-w-0 py-2.5">
+            <h3 class="text-gray-800 font-medium text-sm truncate">{{ music.title }}</h3>
+            <p class="text-gray-500 text-xs mt-0.5 truncate">{{ music.artist }} - {{ music.album }}</p>
+          </div>
 
-            <!-- 右侧操作按钮 -->
-            <div class="flex items-center gap-1 flex-shrink-0">
-              <!-- MV播放按钮（isDownloadMv为Y时显示） -->
-              <div 
-                v-if="music.isDownloadMv === 'Y'"
-                class="mv-play-btn w-8 h-8 flex items-center justify-center rounded-full bg-orange-100 text-orange-500 cursor-pointer"
-                @click.stop="handleMvPlay(music)"
-              >
-                <span class="text-sm">🎬</span>
-              </div>
-              <!-- 更多按钮 -->
-              <div 
-                class="more-btn w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 cursor-pointer"
-                @click.stop="handleMore(music)"
-              >
-                <span class="text-sm">⋮</span>
-              </div>
+          <!-- 右侧操作按钮 -->
+          <div class="flex items-center gap-1 flex-shrink-0 mr-2">
+            <!-- MV播放按钮（isDownloadMv为Y时显示） -->
+            <div 
+              v-if="music.isDownloadMv === 'Y'"
+              class="mv-play-btn w-7 h-7 flex items-center justify-center rounded-full bg-orange-100 text-orange-500 cursor-pointer"
+              @click.stop="handleMvPlay(music)"
+            >
+              <span class="text-xs">🎬</span>
+            </div>
+            <!-- 更多按钮 -->
+            <div 
+              class="more-btn w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 cursor-pointer"
+              @click.stop="handleMore(music)"
+            >
+              <span class="text-xs">⋮</span>
             </div>
           </div>
         </div>
@@ -223,12 +221,12 @@ const onMoreActionSelect = (action: { name: string }) => {
   
   if (action.name === '收藏') {
     showToast({
-      message: `${currentMusic.value.title} 收藏功能开发中`,
+      message: `收藏功能开发中`,
       position: 'top'
     })
   } else if (action.name === '下载') {
     showToast({
-      message: `${currentMusic.value.title} 下载功能开发中`,
+      message: `下载功能开发中`,
       position: 'top'
     })
   }
