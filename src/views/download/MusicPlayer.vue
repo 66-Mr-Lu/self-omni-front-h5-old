@@ -14,7 +14,7 @@
     </div>
 
     <!-- 主内容区域 -->
-    <div class="main-content pt-12 pb-32">
+    <div class="main-content pt-0 pb-32 px-4 top-0">
       <!-- 加载中状态 -->
       <div v-if="loading" class="flex flex-col items-center justify-center h-[60vh]">
         <div class="w-12 h-12 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -23,8 +23,8 @@
 
       <template v-else-if="musicStore.currentSong">
         <!-- 封面图片区域 -->
-        <div class="cover-section flex flex-col items-center justify-center py-12">
-          <div class="cover-container relative w-64 h-64 rounded-2xl overflow-hidden shadow-2xl">
+        <div class="cover-section flex flex-col items-center justify-center py-6">
+          <div class="cover-container relative w-56 h-56 rounded-2xl overflow-hidden shadow-2xl">
             <div class="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <span class="text-6xl">🎵</span>
             </div>
@@ -34,43 +34,38 @@
               :class="{ 'animate-spin-slow': musicStore.isPlaying }"
             ></div>
           </div>
-          
-          <!-- 歌曲信息 -->
-          <div class="song-info mt-8 text-center px-4">
-            <h2 class="text-white text-xl font-bold truncate max-w-xs">{{ musicStore.currentSong.title }}</h2>
-            <p class="text-white/60 text-sm mt-2 truncate max-w-xs">{{ musicStore.currentSong.artist }}</p>
-            <p class="text-white/40 text-xs mt-1">{{ musicStore.currentSong.album }}</p>
+        </div>
+
+        <!-- 歌曲信息区域 -->
+        <div class="info-section mt-2">
+          <!-- 第一行：标题，占60%宽度，支持滚动 -->
+          <div class="title-row w-[60%] overflow-x-auto scrollbar-hide">
+            <h2 class="text-white text-xl font-bold whitespace-nowrap">{{ musicStore.currentSong.title }}</h2>
           </div>
 
-          <!-- 音频品质信息 -->
-          <div class="quality-info mt-4 flex items-center gap-3 flex-wrap justify-center">
+          <!-- 第二行：歌手、品质、比特率 -->
+          <div class="meta-row mt-1.5 flex items-center gap-3">
+            <span class="text-white/60 text-sm">{{ musicStore.currentSong.artist }}</span>
             <span 
-              class="px-3 py-1 rounded-full text-xs"
+              class="px-2 py-0.5 rounded-full text-xs"
               :class="getQualityClass(musicStore.currentSong.qualityLevel)"
             >
               {{ musicStore.currentSong.qualityLevel }}
             </span>
-            <span class="px-3 py-1 rounded-full text-xs bg-white/10 text-white/70">
-              {{ musicStore.currentSong.codec }}
-            </span>
-            <span class="px-3 py-1 rounded-full text-xs bg-white/10 text-white/70">
-              {{ musicStore.currentSong.bitrate }}kbps
-            </span>
-            <span class="px-3 py-1 rounded-full text-xs bg-white/10 text-white/70">
-              {{ musicStore.currentSong.sampleRate }}Hz
-            </span>
-            <span v-if="musicStore.currentSong.bitDepth" class="px-3 py-1 rounded-full text-xs bg-white/10 text-white/70">
-              {{ musicStore.currentSong.bitDepth }}bit
-            </span>
+            <span class="text-white/40 text-xs">{{ musicStore.currentSong.bitrate }}kbps</span>
           </div>
-        </div>
 
-        <!-- 进度条区域 -->
-        <div class="progress-section px-6">
-          <div class="flex items-center">
-            <span class="text-white/60 text-xs w-10 text-right">{{ formatTime(musicStore.currentTime) }}</span>
+          <!-- 第三行：歌词（只显示一行） -->
+          <div class="lyrics-row mt-2">
+            <p class="text-white/50 text-sm">
+              {{ currentLyricText || '暂无歌词' }}
+            </p>
+          </div>
+
+          <!-- 第四行：进度条 -->
+          <div class="progress-row mt-3">
             <div 
-              class="flex-1 h-1 bg-white/20 rounded-full mx-3 cursor-pointer relative"
+              class="w-full h-1 bg-white/20 rounded-full cursor-pointer relative"
               @click="seekTo"
               ref="progressBarRef"
             >
@@ -83,99 +78,57 @@
                 :style="{ left: musicStore.progressPercent + '%', transform: 'translate(-50%, -50%)' }"
               ></div>
             </div>
-            <span class="text-white/60 text-xs w-10">{{ formatTime(musicStore.duration) }}</span>
-          </div>
-        </div>
-
-        <!-- 歌词显示区域 -->
-        <div v-if="hasLyrics" class="lyrics-section px-6 mt-8">
-          <div 
-            ref="lyricsContainerRef"
-            class="lyrics-container h-48 overflow-y-auto text-center scrollbar-hide"
-          >
-            <div 
-              v-for="(line, index) in lyrics" 
-              :key="index"
-              class="lyric-line py-2 transition-all duration-300 text-base"
-              :class="{
-                'text-white font-semibold text-lg': index === currentLyricIndex,
-                'text-white/40': index !== currentLyricIndex
-              }"
-            >
-              {{ line.text }}
+            <div class="flex justify-between mt-1">
+              <span class="text-white/60 text-xs">{{ formatTime(musicStore.currentTime) }}</span>
+              <span class="text-white/60 text-xs">{{ formatTime(musicStore.duration) }}</span>
             </div>
           </div>
-        </div>
 
-        <!-- 控制按钮区域 -->
-        <div class="controls-section flex items-center justify-center gap-8 mt-10">
-          <!-- 上一首 -->
-          <div 
-            class="control-btn w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-            @click="prevSong"
-          >
-            <span class="text-white text-xl">⏮</span>
-          </div>
-
-          <!-- 播放/暂停 -->
-          <div 
-            class="play-btn w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg hover:shadow-purple-500/50 transition-all cursor-pointer active:scale-95"
-            @click="togglePlay"
-          >
-            <span v-if="!musicStore.isPlaying" class="text-white text-3xl">▶</span>
-            <span v-else class="text-white text-3xl">⏸</span>
-          </div>
-
-          <!-- 下一首 -->
-          <div 
-            class="control-btn w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-            @click="nextSong"
-          >
-            <span class="text-white text-xl">⏭</span>
-          </div>
-        </div>
-
-        <!-- 音量控制 -->
-        <div class="volume-section flex items-center justify-center gap-4 mt-8">
-          <span class="text-white/60 text-lg">🔊</span>
-          <div 
-            class="w-32 h-1 bg-white/20 rounded-full cursor-pointer relative"
-            @click="setVolume"
-            ref="volumeBarRef"
-          >
+          <!-- 第五行：控制按钮 -->
+          <div class="controls-row mt-6 flex items-center justify-between">
+            <!-- 播放模式（循环切换） -->
             <div 
-              class="h-full bg-white/60 rounded-full transition-all"
-              :style="{ width: musicStore.volume + '%' }"
-            ></div>
-          </div>
-          <span class="text-white/60 text-xs w-8">{{ musicStore.volume }}%</span>
-        </div>
+              class="mode-btn w-10 h-10 flex items-center justify-center cursor-pointer"
+              @click="cyclePlayMode"
+            >
+              <span class="text-white/70 text-xl">{{ playModeIcon }}</span>
+            </div>
 
-        <!-- 播放模式 -->
-        <div class="mode-section flex items-center justify-center gap-6 mt-6">
-          <div 
-            class="mode-btn flex flex-col items-center gap-1 cursor-pointer"
-            :class="{ active: musicStore.playMode === 'repeat' }"
-            @click="setMode('repeat')"
-          >
-            <span class="text-white/60 text-lg">🔁</span>
-            <span class="text-white/40 text-xs">循环</span>
-          </div>
-          <div 
-            class="mode-btn flex flex-col items-center gap-1 cursor-pointer"
-            :class="{ active: musicStore.playMode === 'shuffle' }"
-            @click="setMode('shuffle')"
-          >
-            <span class="text-white/60 text-lg">🔀</span>
-            <span class="text-white/40 text-xs">随机</span>
-          </div>
-          <div 
-            class="mode-btn flex flex-col items-center gap-1 cursor-pointer"
-            :class="{ active: musicStore.playMode === 'single' }"
-            @click="setMode('single')"
-          >
-            <span class="text-white/60 text-lg">🔂</span>
-            <span class="text-white/40 text-xs">单曲</span>
+            <!-- 播放控制组（上一首、播放、下一首），整体居中 -->
+            <div class="play-controls flex items-center gap-6">
+              <!-- 上一首 -->
+              <div 
+                class="control-btn w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+                @click="prevSong"
+              >
+                <span class="text-white text-xl">⏮</span>
+              </div>
+
+              <!-- 播放/暂停 -->
+              <div 
+                class="play-btn w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg hover:shadow-purple-500/50 transition-all cursor-pointer active:scale-95"
+                @click="togglePlay"
+              >
+                <span v-if="!musicStore.isPlaying" class="text-white text-3xl">▶</span>
+                <span v-else class="text-white text-3xl">⏸</span>
+              </div>
+
+              <!-- 下一首 -->
+              <div 
+                class="control-btn w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+                @click="nextSong"
+              >
+                <span class="text-white text-xl">⏭</span>
+              </div>
+            </div>
+
+            <!-- 更多按钮 -->
+            <div 
+              class="more-btn w-10 h-10 flex items-center justify-center cursor-pointer"
+              @click="togglePlaylist"
+            >
+              <span class="text-white/70 text-xl">☰</span>
+            </div>
           </div>
         </div>
       </template>
@@ -232,7 +185,6 @@ const router = useRouter()
 const route = useRoute()
 
 const progressBarRef = ref<HTMLDivElement | null>(null)
-const volumeBarRef = ref<HTMLDivElement | null>(null)
 const showPlaylist = ref(false)
 const loading = ref(false)
 
@@ -281,6 +233,45 @@ const currentLyricIndex = computed(() => {
   }
   return -1
 })
+
+// 当前歌词文本（只显示一行）
+const currentLyricText = computed(() => {
+  if (currentLyricIndex.value >= 0 && lyrics.value[currentLyricIndex.value]) {
+    return lyrics.value[currentLyricIndex.value].text
+  }
+  return ''
+})
+
+// 播放模式图标
+const playModeIcon = computed(() => {
+  const iconMap: Record<string, string> = {
+    repeat: '🔁',
+    shuffle: '🔀',
+    single: '🔂'
+  }
+  return iconMap[musicStore.playMode] || '🔁'
+})
+
+// 循环切换播放模式
+const cyclePlayMode = () => {
+  const modes: PlayMode[] = ['repeat', 'shuffle', 'single']
+  const currentIndex = modes.indexOf(musicStore.playMode)
+  const nextIndex = (currentIndex + 1) % modes.length
+  const nextMode = modes[nextIndex]
+  
+  musicStore.setPlayMode(nextMode)
+  
+  const modeNames: Record<string, string> = {
+    repeat: '列表循环',
+    shuffle: '随机播放',
+    single: '单曲循环'
+  }
+  
+  showToast({
+    message: modeNames[nextMode],
+    position: 'top'
+  })
+}
 
 // 获取歌词资源
 const fetchLyrics = async (songId: number) => {
@@ -393,22 +384,6 @@ const nextSong = () => {
   }
 }
 
-// 设置播放模式
-const setMode = (mode: PlayMode) => {
-  musicStore.setPlayMode(mode)
-  
-  const modeNames: Record<string, string> = {
-    repeat: '列表循环',
-    shuffle: '随机播放',
-    single: '单曲循环'
-  }
-  
-  showToast({
-    message: modeNames[mode],
-    position: 'top'
-  })
-}
-
 // 跳转进度
 const seekTo = (event: MouseEvent) => {
   if (!progressBarRef.value || musicStore.duration === 0) return
@@ -420,20 +395,13 @@ const seekTo = (event: MouseEvent) => {
   musicStore.setCurrentTime(time)
 }
 
-// 设置音量
-const setVolume = (event: MouseEvent) => {
-  if (!volumeBarRef.value) return
-  
-  const rect = volumeBarRef.value.getBoundingClientRect()
-  const percent = (event.clientX - rect.left) / rect.width
-  const newVolume = Math.max(0, Math.min(100, percent * 100))
-  
-  musicStore.setVolume(newVolume)
-}
-
 // 切换播放列表显示
 const togglePlaylist = () => {
-  showPlaylist.value = !showPlaylist.value
+  // showPlaylist.value = !showPlaylist.value
+  showToast({
+    message: '播放列表功能开发中',
+    position: 'top'
+  })
 }
 
 // 获取音乐详情
@@ -528,8 +496,9 @@ onMounted(() => {
   transform: scale(0.95);
 }
 
-.mode-btn.active span:first-child {
-  color: #a855f7;
+.mode-btn:active,
+.more-btn:active {
+  opacity: 0.7;
 }
 
 .playlist-item:active {
@@ -549,11 +518,7 @@ onMounted(() => {
   border-radius: 2px;
 }
 
-.lyrics-container {
-  scroll-behavior: smooth;
-}
-
-.lyrics-container::-webkit-scrollbar {
+.title-row::-webkit-scrollbar {
   display: none;
 }
 
