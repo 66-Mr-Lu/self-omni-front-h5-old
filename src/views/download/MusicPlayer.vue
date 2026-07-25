@@ -684,7 +684,6 @@ onMounted(() => {
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
 
