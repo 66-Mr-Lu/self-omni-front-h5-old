@@ -188,6 +188,11 @@ const progressBarRef = ref<HTMLDivElement | null>(null)
 const showPlaylist = ref(false)
 const loading = ref(false)
 
+// 是否需要自动播放（从音乐列表点击进入时为true，从迷你播放器进入时为false）
+const shouldAutoPlay = computed(() => {
+  return route.query.autoPlay === 'true'
+})
+
 const musicStore = useMusicStore()
 
 // 歌词相关
@@ -439,6 +444,14 @@ const fetchMusicDetail = async () => {
     
     // 获取歌词
     await fetchLyrics(musicId)
+    
+    // 只有从音乐列表点击进入时才自动播放（从迷你播放器进入时保持原播放状态）
+    if (shouldAutoPlay.value) {
+      musicStore.setIsPlaying(false)
+      setTimeout(() => {
+        musicStore.setIsPlaying(true)
+      }, 300)
+    }
   } catch (error) {
     showToast({
       message: error instanceof Error ? error.message : '获取音乐详情失败',

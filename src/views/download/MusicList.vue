@@ -197,8 +197,11 @@ const handleMusicClick = (music: MusicInfoResp) => {
   musicStore.setCurrentIndex(musicStore.playlist.length - 1)
   musicStore.setCurrentSong(music)
   
-  // 跳转到播放页面
-  router.push(`/resource/music-player/${music.id}`)
+  // 跳转到播放页面，带上autoPlay参数表示需要自动播放
+  router.push({
+    path: `/resource/music-player/${music.id}`,
+    query: { autoPlay: 'true' }
+  })
 }
 
 // 点击MV播放按钮
