@@ -42,6 +42,10 @@
               <div 
                 class="lyrics-container overflow-y-auto h-full"
                 ref="lyricsContainerRef"
+                @touchstart="handleUserTouchStart"
+                @touchmove="handleUserScroll"
+                @touchend="handleUserTouchEnd"
+                @touchcancel="handleUserTouchEnd"
               >
                 <!-- 顶部 spacer：使首行歌词能滚动到中间位置 -->
                 <div class="lyrics-spacer-top"></div>
@@ -249,6 +253,9 @@ const showPlaylist = ref(false)
 const loading = ref(false)
 const isLyricMode = ref(false)
 const clickTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+// 用户手动滚动标志位：用户滚动后 3 秒内暂停自动滚动
+const userScrolling = ref(false)
+const userScrollTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 // 是否需要自动播放（从音乐列表点击进入时为true，从迷你播放器进入时为false）
 const shouldAutoPlay = computed(() => {
@@ -363,9 +370,11 @@ const fetchLyrics = async (songId: number) => {
   }
 }
 
-// 歌词自动滚动
+// 歌词自动滚动（用户手动滚动期间暂停）
 const scrollToCurrentLyric = () => {
   if (!lyricsContainerRef.value || currentLyricIndex.value < 0) return
+  // 用户正在手动滚动浏览时，不自动跳转
+  if (userScrolling.value) return
   
   const lyricElement = lyricsContainerRef.value.children[currentLyricIndex.value] as HTMLElement
   if (!lyricElement) return
@@ -374,6 +383,38 @@ const scrollToCurrentLyric = () => {
     behavior: 'smooth',
     block: 'center'
   })
+}
+
+// 处理用户手动滚动：暂停自动滚动 3 秒，期间继续滚动则重置计时器
+const handleUserScroll = () => {
+  userScrolling.value = true
+  // 手指还在屏幕上时，清除计时器，不开始倒计时
+  if (userScrollTimer.value) {
+    clearTimeout(userScrollTimer.value)
+    userScrollTimer.value = null
+  }
+}
+
+// 用户手指离开屏幕后，开始 3 秒倒计时恢复自动滚动
+const handleUserTouchEnd = () => {
+  if (userScrollTimer.value) {
+    clearTimeout(userScrollTimer.value)
+  }
+  userScrollTimer.value = setTimeout(() => {
+    userScrolling.value = false
+    // 恢复后立即滚回当前歌词位置
+    scrollToCurrentLyric()
+    userScrollTimer.value = null
+  }, 3000)
+}
+
+// 用户按下手指时，确保暂停自动滚动（清除可能存在的倒计时）
+const handleUserTouchStart = () => {
+  userScrolling.value = true
+  if (userScrollTimer.value) {
+    clearTimeout(userScrollTimer.value)
+    userScrollTimer.value = null
+  }
 }
 
 // 监听当前歌曲变化，重新获取歌词
