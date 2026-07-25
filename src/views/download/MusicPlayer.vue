@@ -327,7 +327,7 @@ watch(currentLyricIndex, () => {
 
 // 返回上一页（收起播放器，保留迷你播放器）
 const collapsePlayer = () => {
-  router.push('/resource/music-list')
+  router.back()
 }
 
 // 获取品质等级样式
