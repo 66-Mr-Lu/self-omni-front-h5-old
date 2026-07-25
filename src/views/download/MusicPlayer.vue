@@ -14,7 +14,7 @@
     </div>
 
     <!-- 主内容区域 -->
-    <div class="main-content pt-12 px-4 h-[calc(100vh-48px-44px)] flex flex-col">
+    <div class="main-content pt-6 px-4 h-[calc(100vh-48px-44px)] flex flex-col">
       <!-- 加载中状态 -->
       <div v-if="loading" class="flex flex-col items-center justify-center h-[60vh] flex-1">
         <div class="w-12 h-12 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -27,7 +27,7 @@
           <!-- 歌词模式 -->
           <template v-if="isLyricMode">
             <!-- 歌曲信息区域 -->
-            <div class="info-section mt-1">
+            <div class="info-section">
               <!-- 第一行：歌名 -->
               <div class="title-row w-full text-center">
                 <h2 class="text-white text-xl font-bold">{{ musicStore.currentSong.title }}</h2>
