@@ -34,7 +34,7 @@
     </div>
 
     <!-- 内容区域 -->
-    <div class="content pt-14 px-2">
+    <div class="content pt-1 px-2">
       <!-- 加载中状态 -->
       <div v-if="loading" class="flex flex-col items-center justify-center py-20">
         <div class="w-12 h-12 border-3 border-gray-300 border-t-purple-500 rounded-full animate-spin"></div>
@@ -58,7 +58,7 @@
           <!-- 歌曲详情 -->
           <div class="flex-1 min-w-0 py-2.5">
             <h3 class="text-gray-800 font-medium text-sm truncate">{{ music.title }}</h3>
-            <p class="text-gray-500 text-xs mt-0.5 truncate">{{ music.artist }} - {{ music.album }}</p>
+            <p class="text-gray-500 text-[11px] mt-0.5 truncate">{{ music.artist }} - {{ music.album }}</p>
           </div>
 
           <!-- 右侧操作按钮 -->
