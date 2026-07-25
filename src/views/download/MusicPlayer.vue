@@ -442,8 +442,7 @@ const fetchMusicDetail = async () => {
       musicStore.setCurrentIndex(index)
     }
     
-    // 获取歌词
-    await fetchLyrics(musicId)
+    // 歌词获取由 watch musicStore.currentSong 统一处理，避免重复请求
     
     // 只有从音乐列表点击进入时才自动播放（从迷你播放器进入时保持原播放状态）
     if (shouldAutoPlay.value) {
