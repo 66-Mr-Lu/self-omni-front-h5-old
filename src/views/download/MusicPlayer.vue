@@ -49,6 +49,9 @@
                 class="lyrics-container overflow-y-auto h-full"
                 ref="lyricsContainerRef"
               >
+                <!-- 顶部 spacer：使首行歌词能滚动到中间位置 -->
+                <div class="lyrics-spacer-top"></div>
+                
                 <div
                   v-for="(line, index) in lyrics"
                   :key="index"
@@ -62,6 +65,9 @@
                 >
                   {{ line.text }}
                 </div>
+
+                <!-- 底部 spacer：使末行歌词能滚动到中间位置 -->
+                <div class="lyrics-spacer-bottom"></div>
 
                 <!-- 暂无歌词提示 -->
                 <div v-if="!hasLyrics" class="flex flex-col items-center justify-center py-20">
@@ -649,12 +655,17 @@ onMounted(() => {
   display: none;
 }
 
+.lyrics-spacer-top,
+.lyrics-spacer-bottom {
+  height: 50vh;
+}
+
 .lyrics-mask-top {
-  background: linear-gradient(to bottom, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.7) 50%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(88, 28, 135, 0.8) 0%, rgba(88, 28, 135, 0.4) 50%, transparent 100%);
 }
 
 .lyrics-mask-bottom {
-  background: linear-gradient(to top, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.7) 50%, transparent 100%);
+  background: linear-gradient(to top, rgba(88, 28, 135, 0.8) 0%, rgba(88, 28, 135, 0.4) 50%, transparent 100%);
 }
 
 .current-lyric {
