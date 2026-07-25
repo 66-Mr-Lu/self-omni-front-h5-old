@@ -21,7 +21,7 @@
           <!-- 歌词模式 -->
           <template v-if="isLyricMode">
             <!-- 歌曲信息区域 -->
-            <div class="info-section mt-1">
+            <div class="info-section mt-2">
               <!-- 第一行：歌名 -->
               <div class="title-row w-full text-center">
                 <h2 class="text-white text-lg font-semibold">{{ musicStore.currentSong.title }}</h2>
@@ -693,7 +693,7 @@ onMounted(() => {
 
 .lyrics-spacer-top,
 .lyrics-spacer-bottom {
-  height: 50vh;
+  height: 25vh;
 }
 
 .current-lyric {
