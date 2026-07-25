@@ -14,7 +14,7 @@
     </div>
 
     <!-- 主内容区域 -->
-    <div class="main-content pt-0 pb-32 px-4 top-0">
+    <div class="main-content pt-10 pb-32 px-4 top-0">
       <!-- 加载中状态 -->
       <div v-if="loading" class="flex flex-col items-center justify-center h-[60vh]">
         <div class="w-12 h-12 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -37,7 +37,7 @@
         </div>
 
         <!-- 歌曲信息区域 -->
-        <div class="info-section mt-2">
+        <div class="info-section mt-16">
           <!-- 第一行：标题，占60%宽度，支持滚动 -->
           <div class="title-row w-[60%] overflow-x-auto scrollbar-hide">
             <h2 class="text-white text-xl font-bold whitespace-nowrap">{{ musicStore.currentSong.title }}</h2>
@@ -63,7 +63,7 @@
           </div>
 
           <!-- 第四行：进度条 -->
-          <div class="progress-row mt-3">
+          <div class="progress-row mt-4">
             <div 
               class="w-full h-1 bg-white/20 rounded-full cursor-pointer relative"
               @click="seekTo"
@@ -85,7 +85,7 @@
           </div>
 
           <!-- 第五行：控制按钮 -->
-          <div class="controls-row mt-6 flex items-center justify-between">
+          <div class="controls-row mt-2 flex items-center justify-between">
             <!-- 播放模式（循环切换） -->
             <div 
               class="mode-btn w-10 h-10 flex items-center justify-center cursor-pointer"
@@ -106,11 +106,11 @@
 
               <!-- 播放/暂停 -->
               <div 
-                class="play-btn w-20 h-20 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg hover:shadow-purple-500/50 transition-all cursor-pointer active:scale-95"
+                class="play-btn w-16 h-16 flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg hover:shadow-purple-500/50 transition-all cursor-pointer active:scale-95"
                 @click="togglePlay"
               >
-                <span v-if="!musicStore.isPlaying" class="text-white text-3xl">▶</span>
-                <span v-else class="text-white text-3xl">⏸</span>
+                <span v-if="!musicStore.isPlaying" class="text-white text-2xl">▶</span>
+                <span v-else class="text-white text-2xl">⏸</span>
               </div>
 
               <!-- 下一首 -->
