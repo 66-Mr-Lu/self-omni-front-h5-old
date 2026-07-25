@@ -1,7 +1,7 @@
 <template>
-  <div class="home-page min-h-screen bg-gray-100 pb-16">
+  <div class="home-page min-h-screen bg-gray-100" :class="isFullscreenPage ? '' : 'pb-16'">
     <!-- 顶部导航栏 -->
-    <div v-if="!isNoteEditorPage" class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
+    <div v-if="!isFullscreenPage" class="header fixed top-0 left-0 right-0 bg-gradient-to-r from-primary to-info z-50">
       <!-- 子页面导航栏样式 -->
       <div v-if="showBackButton" class="flex items-center px-4 h-10">
         <div class="back-btn w-7 h-7 flex items-center justify-center cursor-pointer" @click="goBack">
@@ -96,7 +96,7 @@
     ></div>
 
     <!-- 主内容区 - 使用 router-view 显示子页面 -->
-    <div class="content" :class="isNoteEditorPage ? 'pt-0 pb-0' : 'pt-14 px-4 pb-6'">
+    <div class="content" :class="isFullscreenPage ? 'pt-0 pb-0 px-0' : 'pt-14 px-4 pb-6'">
       <router-view v-slot="{ Component }">
         <div v-if="Component" class="view-wrapper">
           <transition name="fade" mode="out-in">
@@ -175,6 +175,11 @@ const isNoteEditorPage = computed(() => {
 // 是否为音乐播放页面
 const isMusicPlayerPage = computed(() => {
   return route.path.startsWith('/resource/music-player/')
+})
+
+// 是否为全屏页面（隐藏顶部导航栏和内容内边距）
+const isFullscreenPage = computed(() => {
+  return isNoteEditorPage.value || isMusicPlayerPage.value
 })
 
 // 当前页面标题

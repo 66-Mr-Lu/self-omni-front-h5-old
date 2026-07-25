@@ -1,20 +1,14 @@
 <template>
-  <div class="music-player-page min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
-    <!-- 顶部导航栏 -->
-    <div class="header fixed top-0 left-0 right-0 bg-black/60 backdrop-blur-md z-50">
-      <div class="flex items-center px-4 h-12">
-        <div class="back-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="collapsePlayer">
-          <span class="text-white text-xl">‹</span>
-        </div>
-        <h1 class="text-white text-lg font-semibold mx-3 truncate flex-1">音乐播放</h1>
-        <div class="playlist-btn w-8 h-8 flex items-center justify-center cursor-pointer" @click="togglePlaylist">
-          <span class="text-white text-xl">☰</span>
-        </div>
+  <div class="music-player-page h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <!-- 顶部返回按钮（悬浮） -->
+    <div class="back-button absolute top-0 left-0 z-50">
+      <div class="w-10 h-10 flex items-center justify-center cursor-pointer" @click="collapsePlayer">
+        <span class="text-white text-3xl">‹</span>
       </div>
     </div>
 
     <!-- 主内容区域 -->
-    <div class="main-content pt-6 px-4 h-[calc(100vh-48px-44px)] flex flex-col">
+    <div class="main-content px-4 h-[calc(100vh-44px)] flex flex-col">
       <!-- 加载中状态 -->
       <div v-if="loading" class="flex flex-col items-center justify-center h-[60vh] flex-1">
         <div class="w-12 h-12 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -22,46 +16,57 @@
       </div>
 
       <template v-else-if="musicStore.currentSong">
-        <!-- 上方可变内容区域（flex-1 填充剩余空间） -->
-        <div class="flex-1 overflow-hidden">
+        <!-- 上方可变内容区域（flex-1 填充剩余空间，歌词模式下使用 flex 列布局） -->
+        <div class="flex-1 overflow-hidden" :class="{ 'flex flex-col': isLyricMode }">
           <!-- 歌词模式 -->
           <template v-if="isLyricMode">
             <!-- 歌曲信息区域 -->
-            <div class="info-section">
+            <div class="info-section mt-1">
               <!-- 第一行：歌名 -->
               <div class="title-row w-full text-center">
-                <h2 class="text-white text-xl font-bold">{{ musicStore.currentSong.title }}</h2>
+                <h2 class="text-white text-lg font-semibold">{{ musicStore.currentSong.title }}</h2>
               </div>
 
               <!-- 第二行：歌手 -->
-              <div class="meta-row mt-2 text-center">
-                <span class="text-white/60 text-sm">{{ musicStore.currentSong.artist }}</span>
+              <div class="meta-row mt-1 text-center">
+                <span class="text-white/50 text-xs">{{ musicStore.currentSong.artist }}</span>
               </div>
             </div>
 
             <!-- 滚动歌词区域（单击返回播放页面，双击歌词跳转到对应时间） -->
             <div 
-              class="lyrics-container overflow-y-auto mt-4 cursor-pointer"
-              ref="lyricsContainerRef"
+              class="lyrics-wrapper relative flex-1 min-h-0 overflow-hidden"
               @click="handleLyricClick"
             >
-              <div
-                v-for="(line, index) in lyrics"
-                :key="index"
-                class="lyric-line py-3 px-4 text-center transition-all"
-                :class="{
-                  'text-white text-lg font-medium': index === currentLyricIndex,
-                  'text-white/40 text-base': index !== currentLyricIndex
-                }"
-                @click.stop="handleLyricClick"
-                @dblclick="handleLyricDblClick(line.time)"
-              >
-                {{ line.text }}
-              </div>
+              <!-- 顶部渐变遮罩 -->
+              <div class="lyrics-mask-top absolute top-0 left-0 right-0 h-20 pointer-events-none z-10"></div>
+              
+              <!-- 底部渐变遮罩 -->
+              <div class="lyrics-mask-bottom absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"></div>
 
-              <!-- 暂无歌词提示 -->
-              <div v-if="!hasLyrics" class="flex flex-col items-center justify-center py-20">
-                <p class="text-white/40 text-sm">暂无歌词</p>
+              <!-- 歌词列表 -->
+              <div 
+                class="lyrics-container overflow-y-auto h-full"
+                ref="lyricsContainerRef"
+              >
+                <div
+                  v-for="(line, index) in lyrics"
+                  :key="index"
+                  class="lyric-line py-4 px-6 text-center transition-all duration-300"
+                  :class="{
+                    'current-lyric': index === currentLyricIndex,
+                    'normal-lyric': index !== currentLyricIndex
+                  }"
+                  @click.stop="handleLyricClick"
+                  @dblclick="handleLyricDblClick(line.time)"
+                >
+                  {{ line.text }}
+                </div>
+
+                <!-- 暂无歌词提示 -->
+                <div v-if="!hasLyrics" class="flex flex-col items-center justify-center py-20">
+                  <p class="text-white/40 text-sm">暂无歌词</p>
+                </div>
               </div>
             </div>
           </template>
@@ -71,8 +76,8 @@
             <!-- 封面和歌曲信息区域 -->
             <div>
               <!-- 封面图片区域 -->
-              <div class="cover-section flex flex-col items-center justify-center py-6">
-                <div class="cover-container relative w-56 h-56 rounded-2xl overflow-hidden shadow-2xl">
+              <div class="cover-section mt-12 flex flex-col items-center justify-center py-6">
+                <div class="cover-container relative w-64 h-64 rounded-2xl overflow-hidden shadow-2xl">
                   <div class="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                     <span class="text-6xl">🎵</span>
                   </div>
@@ -365,11 +370,10 @@ const scrollToCurrentLyric = () => {
   const lyricElement = lyricsContainerRef.value.children[currentLyricIndex.value] as HTMLElement
   if (!lyricElement) return
   
-  const containerHeight = lyricsContainerRef.value.clientHeight
-  const elementTop = lyricElement.offsetTop
-  const elementHeight = lyricElement.clientHeight
-  
-  lyricsContainerRef.value.scrollTop = elementTop - containerHeight / 2 + elementHeight / 2
+  lyricElement.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center'
+  })
 }
 
 // 监听当前歌曲变化，重新获取歌词
@@ -630,8 +634,42 @@ onMounted(() => {
   scrollbar-width: none;
 }
 
+.lyrics-wrapper {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 .lyrics-container {
-  max-height: 40vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+
+.lyrics-container::-webkit-scrollbar {
+  display: none;
+}
+
+.lyrics-mask-top {
+  background: linear-gradient(to bottom, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.7) 50%, transparent 100%);
+}
+
+.lyrics-mask-bottom {
+  background: linear-gradient(to top, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.7) 50%, transparent 100%);
+}
+
+.current-lyric {
+  font-size: 18px;
+  font-weight: 500;
+  color: #ffffff;
+  transform: scale(1.1);
+  text-shadow: 0 0 20px rgba(168, 85, 247, 0.8), 0 0 40px rgba(168, 85, 247, 0.4);
+  letter-spacing: 1px;
+}
+
+.normal-lyric {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.3);
+  transform: scale(1);
 }
 
 .lyric-line:active {
