@@ -38,12 +38,6 @@
               class="lyrics-wrapper relative flex-1 min-h-0 overflow-hidden"
               @click="handleLyricClick"
             >
-              <!-- 顶部渐变遮罩 -->
-              <div class="lyrics-mask-top absolute top-0 left-0 right-0 h-20 pointer-events-none z-10"></div>
-              
-              <!-- 底部渐变遮罩 -->
-              <div class="lyrics-mask-bottom absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"></div>
-
               <!-- 歌词列表 -->
               <div 
                 class="lyrics-container overflow-y-auto h-full"
@@ -649,6 +643,8 @@ onMounted(() => {
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
 
 .lyrics-container::-webkit-scrollbar {
@@ -658,14 +654,6 @@ onMounted(() => {
 .lyrics-spacer-top,
 .lyrics-spacer-bottom {
   height: 50vh;
-}
-
-.lyrics-mask-top {
-  background: linear-gradient(to bottom, rgba(88, 28, 135, 0.8) 0%, rgba(88, 28, 135, 0.4) 50%, transparent 100%);
-}
-
-.lyrics-mask-bottom {
-  background: linear-gradient(to top, rgba(88, 28, 135, 0.8) 0%, rgba(88, 28, 135, 0.4) 50%, transparent 100%);
 }
 
 .current-lyric {
