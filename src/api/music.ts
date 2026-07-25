@@ -20,6 +20,7 @@ export interface MusicInfoResp {
   codec: string           // 编码格式，如 MP3, FLAC, AAC, WAV
   album: string           // 专辑名称
   audioUrl?: string       // 音频文件URL（可选）
+  duration?: number      // 时长（单位：秒）（可选）
 }
 
 // 分页响应（匹配Mybatis-plus分页格式）
@@ -81,4 +82,20 @@ export async function getMusicDetail(id: number): Promise<MusicInfoResp> {
     }
     throw new Error('网络请求失败，请检查网络连接')
   }
+}
+
+export function getMusicResource(id: number, resourceType: string): string {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/omni/api/v1'
+  const token = localStorage.getItem('omni_token') || sessionStorage.getItem('omni_token')
+
+  // 后端接口是 POST，返回文件流
+  // video 标签无法发送 POST 请求，需要后端支持 GET 方式访问资源
+  // 构造 GET 请求 URL，token 通过查询参数传递
+  const url = `${baseUrl}/music/resource/fetch?id=${id}&resourceType=${resourceType}`
+
+  if (token) {
+    return  `${url}&token=${encodeURIComponent(token)}`
+  }
+
+  return url
 }

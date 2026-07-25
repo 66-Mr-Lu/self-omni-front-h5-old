@@ -87,6 +87,26 @@
           </div>
         </div>
 
+        <!-- 歌词显示区域 -->
+        <div v-if="hasLyrics" class="lyrics-section px-6 mt-8">
+          <div 
+            ref="lyricsContainerRef"
+            class="lyrics-container h-48 overflow-y-auto text-center scrollbar-hide"
+          >
+            <div 
+              v-for="(line, index) in lyrics" 
+              :key="index"
+              class="lyric-line py-2 transition-all duration-300 text-base"
+              :class="{
+                'text-white font-semibold text-lg': index === currentLyricIndex,
+                'text-white/40': index !== currentLyricIndex
+              }"
+            >
+              {{ line.text }}
+            </div>
+          </div>
+        </div>
+
         <!-- 控制按钮区域 -->
         <div class="controls-section flex items-center justify-center gap-8 mt-10">
           <!-- 上一首 -->
@@ -198,52 +218,120 @@
       </div>
     </div>
 
-    <!-- 音频元素 -->
-    <audio
-      ref="audioRef"
-      :src="currentAudioUrl"
-      @loadedmetadata="onAudioLoaded"
-      @timeupdate="onTimeUpdate"
-      @ended="onSongEnded"
-      @error="onAudioError"
-      @play="onPlay"
-      @pause="onPause"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
-import { getMusicDetail } from '@/api/music'
+import { getMusicDetail, getMusicResource } from '@/api/music'
 import { useMusicStore, type PlayMode } from '@/stores/music'
 
-// 路由
 const router = useRouter()
 const route = useRoute()
 
-// 音频引用
-const audioRef = ref<HTMLAudioElement | null>(null)
-
-// 进度条引用
 const progressBarRef = ref<HTMLDivElement | null>(null)
-
-// 音量条引用
 const volumeBarRef = ref<HTMLDivElement | null>(null)
-
-// 播放列表弹窗
 const showPlaylist = ref(false)
-
-// 加载状态
 const loading = ref(false)
 
-// 使用音乐 store
 const musicStore = useMusicStore()
 
-// 当前音频URL（后续替换为真实API）
-const currentAudioUrl = computed(() => {
-  return musicStore.currentSong?.audioUrl || ''
+// 歌词相关
+interface LyricLine {
+  time: number
+  text: string
+}
+
+const lyrics = ref<LyricLine[]>([])
+const lyricsContainerRef = ref<HTMLDivElement | null>(null)
+const hasLyrics = ref(false)
+
+// 解析 LRC 格式歌词
+const parseLrc = (lrcText: string): LyricLine[] => {
+  const lines = lrcText.split('\n')
+  const result: LyricLine[] = []
+  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/
+  
+  lines.forEach(line => {
+    const matches = line.match(timeRegex)
+    if (matches) {
+      const minutes = parseInt(matches[1])
+      const seconds = parseInt(matches[2])
+      const milliseconds = parseInt(matches[3].padEnd(3, '0'))
+      const time = minutes * 60 + seconds + milliseconds / 1000
+      const text = line.replace(timeRegex, '').trim()
+      if (text) {
+        result.push({ time, text })
+      }
+    }
+  })
+  
+  return result.sort((a, b) => a.time - b.time)
+}
+
+// 获取当前歌词索引
+const currentLyricIndex = computed(() => {
+  const currentTime = musicStore.currentTime
+  for (let i = lyrics.value.length - 1; i >= 0; i--) {
+    if (currentTime >= lyrics.value[i].time) {
+      return i
+    }
+  }
+  return -1
+})
+
+// 获取歌词资源
+const fetchLyrics = async (songId: number) => {
+  try {
+    const lyricUrl = getMusicResource(songId, 'lyric')
+    const response = await fetch(lyricUrl)
+    
+    if (!response.ok) {
+      hasLyrics.value = false
+      return
+    }
+    
+    const lrcText = await response.text()
+    if (!lrcText.trim()) {
+      hasLyrics.value = false
+      return
+    }
+    
+    lyrics.value = parseLrc(lrcText)
+    hasLyrics.value = lyrics.value.length > 0
+  } catch {
+    hasLyrics.value = false
+  }
+}
+
+// 歌词自动滚动
+const scrollToCurrentLyric = () => {
+  if (!lyricsContainerRef.value || currentLyricIndex.value < 0) return
+  
+  const lyricElement = lyricsContainerRef.value.children[currentLyricIndex.value] as HTMLElement
+  if (!lyricElement) return
+  
+  const containerHeight = lyricsContainerRef.value.clientHeight
+  const elementTop = lyricElement.offsetTop
+  const elementHeight = lyricElement.clientHeight
+  
+  lyricsContainerRef.value.scrollTop = elementTop - containerHeight / 2 + elementHeight / 2
+}
+
+// 监听当前歌曲变化，重新获取歌词
+watch(() => musicStore.currentSong, async (newSong) => {
+  if (newSong) {
+    lyrics.value = []
+    hasLyrics.value = false
+    await fetchLyrics(newSong.id)
+  }
+})
+
+// 监听歌词索引变化，触发滚动
+watch(currentLyricIndex, () => {
+  scrollToCurrentLyric()
 })
 
 // 返回上一页（收起播放器，保留迷你播放器）
@@ -271,18 +359,7 @@ const formatTime = (time: number): string => {
 
 // 播放/暂停切换
 const togglePlay = () => {
-  if (!audioRef.value) return
-  
-  if (!musicStore.isPlaying) {
-    audioRef.value.play().catch(() => {
-      showToast({
-        message: '播放失败，请检查音频链接',
-        position: 'top'
-      })
-    })
-  } else {
-    audioRef.value.pause()
-  }
+  musicStore.setIsPlaying(!musicStore.isPlaying)
 }
 
 // 播放指定歌曲
@@ -291,43 +368,28 @@ const playSong = (index: number) => {
   const song = musicStore.playlist[index]
   musicStore.setCurrentSong(song)
   showPlaylist.value = false
-  
-  if (audioRef.value) {
-    audioRef.value.load()
-    audioRef.value.play().catch(() => {
-      showToast({
-        message: '播放失败，请检查音频链接',
-        position: 'top'
-      })
-    })
-  }
+  setTimeout(() => {
+    musicStore.setIsPlaying(true)
+  }, 100)
 }
 
 // 上一首
 const prevSong = () => {
   const prev = musicStore.playPrev()
-  if (prev && audioRef.value) {
-    audioRef.value.load()
-    audioRef.value.play().catch(() => {
-      showToast({
-        message: '播放失败，请检查音频链接',
-        position: 'top'
-      })
-    })
+  if (prev) {
+    setTimeout(() => {
+      musicStore.setIsPlaying(true)
+    }, 100)
   }
 }
 
 // 下一首
 const nextSong = () => {
   const next = musicStore.playNext()
-  if (next && audioRef.value) {
-    audioRef.value.load()
-    audioRef.value.play().catch(() => {
-      showToast({
-        message: '播放失败，请检查音频链接',
-        position: 'top'
-      })
-    })
+  if (next) {
+    setTimeout(() => {
+      musicStore.setIsPlaying(true)
+    }, 100)
   }
 }
 
@@ -349,26 +411,24 @@ const setMode = (mode: PlayMode) => {
 
 // 跳转进度
 const seekTo = (event: MouseEvent) => {
-  if (!progressBarRef.value || !audioRef.value) return
+  if (!progressBarRef.value || musicStore.duration === 0) return
   
   const rect = progressBarRef.value.getBoundingClientRect()
   const percent = (event.clientX - rect.left) / rect.width
   const time = percent * musicStore.duration
   
   musicStore.setCurrentTime(time)
-  audioRef.value.currentTime = time
 }
 
 // 设置音量
 const setVolume = (event: MouseEvent) => {
-  if (!volumeBarRef.value || !audioRef.value) return
+  if (!volumeBarRef.value) return
   
   const rect = volumeBarRef.value.getBoundingClientRect()
   const percent = (event.clientX - rect.left) / rect.width
   const newVolume = Math.max(0, Math.min(100, percent * 100))
   
   musicStore.setVolume(newVolume)
-  audioRef.value.volume = newVolume / 100
 }
 
 // 切换播放列表显示
@@ -395,6 +455,11 @@ const fetchMusicDetail = async () => {
     // 更新当前歌曲信息
     musicStore.setCurrentSong(detail)
     
+    // 设置时长（优先使用后台返回的时长）
+    if (detail.duration) {
+      musicStore.setDuration(detail.duration)
+    }
+    
     // 添加到播放列表（如果不存在）
     musicStore.addToPlaylist(detail)
     
@@ -404,10 +469,8 @@ const fetchMusicDetail = async () => {
       musicStore.setCurrentIndex(index)
     }
     
-    // 设置默认音量
-    if (audioRef.value) {
-      audioRef.value.volume = musicStore.volume / 100
-    }
+    // 获取歌词
+    await fetchLyrics(musicId)
   } catch (error) {
     showToast({
       message: error instanceof Error ? error.message : '获取音乐详情失败',
@@ -418,64 +481,9 @@ const fetchMusicDetail = async () => {
   }
 }
 
-// 音频加载完成
-const onAudioLoaded = () => {
-  if (audioRef.value) {
-    musicStore.setDuration(audioRef.value.duration)
-  }
-}
-
-// 播放时间更新
-const onTimeUpdate = () => {
-  if (audioRef.value) {
-    musicStore.setCurrentTime(audioRef.value.currentTime)
-  }
-}
-
-// 歌曲播放结束
-const onSongEnded = () => {
-  musicStore.setIsPlaying(false)
-  
-  // 根据播放模式决定下一首
-  if (musicStore.playMode === 'single') {
-    // 单曲循环，重新播放
-    if (audioRef.value) {
-      audioRef.value.load()
-      audioRef.value.play()
-    }
-  } else {
-    // 列表循环或随机播放，播放下一首
-    nextSong()
-  }
-}
-
-// 播放开始
-const onPlay = () => {
-  musicStore.setIsPlaying(true)
-}
-
-// 播放暂停
-const onPause = () => {
-  musicStore.setIsPlaying(false)
-}
-
-// 音频加载错误
-const onAudioError = () => {
-  musicStore.setIsPlaying(false)
-  showToast({
-    message: '音频加载失败',
-    position: 'top'
-  })
-}
-
 // 页面加载
 onMounted(() => {
   fetchMusicDetail()
-})
-
-// 页面卸载
-onUnmounted(() => {
-  // 保持播放状态，不停止音频
 })
 </script>
 
@@ -539,5 +547,18 @@ onUnmounted(() => {
 .playlist-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
+}
+
+.lyrics-container {
+  scroll-behavior: smooth;
+}
+
+.lyrics-container::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

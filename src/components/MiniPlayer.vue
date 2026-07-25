@@ -82,16 +82,28 @@ const togglePlay = () => {
 
 // 上一首
 const prevSong = () => {
-  musicStore.playPrev()
+  const prev = musicStore.playPrev()
+  if (prev) {
+    setTimeout(() => {
+      musicStore.setIsPlaying(true)
+    }, 100)
+  }
 }
 
 // 下一首
 const nextSong = () => {
-  musicStore.playNext()
+  const next = musicStore.playNext()
+  if (next) {
+    setTimeout(() => {
+      musicStore.setIsPlaying(true)
+    }, 100)
+  }
 }
 
 // 跳转进度
 const seekTo = (event: MouseEvent) => {
+  if (musicStore.duration === 0) return
+  
   const target = event.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
   const percent = (event.clientX - rect.left) / rect.width
