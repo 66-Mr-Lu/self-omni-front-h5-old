@@ -39,28 +39,22 @@
               </div>
             </div>
 
-            <!-- 返回播放页面区域（点击歌手和歌词中间的内容回到播放页面） -->
-            <div
-              class="back-to-player-area h-8 flex items-center justify-center cursor-pointer mt-4"
-              @click="toggleLyricMode"
-            >
-              <span class="text-white/40 text-xs">点击返回播放页面</span>
-            </div>
-
-            <!-- 滚动歌词区域 -->
+            <!-- 滚动歌词区域（单击返回播放页面，双击歌词跳转到对应时间） -->
             <div 
-              class="lyrics-container overflow-y-auto mt-2"
+              class="lyrics-container overflow-y-auto mt-4 cursor-pointer"
               ref="lyricsContainerRef"
+              @click="handleLyricClick"
             >
               <div
                 v-for="(line, index) in lyrics"
                 :key="index"
-                class="lyric-line py-3 px-4 text-center cursor-pointer transition-all"
+                class="lyric-line py-3 px-4 text-center transition-all"
                 :class="{
                   'text-white text-lg font-medium': index === currentLyricIndex,
                   'text-white/40 text-base': index !== currentLyricIndex
                 }"
-                @dblclick="seekToLyric(line.time)"
+                @click.stop="handleLyricClick"
+                @dblclick="handleLyricDblClick(line.time)"
               >
                 {{ line.text }}
               </div>
@@ -249,6 +243,7 @@ const lyricsContainerRef = ref<HTMLDivElement | null>(null)
 const showPlaylist = ref(false)
 const loading = ref(false)
 const isLyricMode = ref(false)
+const clickTimer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 // 是否需要自动播放（从音乐列表点击进入时为true，从迷你播放器进入时为false）
 const shouldAutoPlay = computed(() => {
@@ -409,6 +404,26 @@ const toggleLyricMode = () => {
 // 跳转到指定歌词时间
 const seekToLyric = (time: number) => {
   musicStore.setCurrentTime(time)
+}
+
+// 处理歌词区域单击事件（延迟返回）
+const handleLyricClick = () => {
+  if (clickTimer.value) {
+    clearTimeout(clickTimer.value)
+  }
+  clickTimer.value = setTimeout(() => {
+    toggleLyricMode()
+    clickTimer.value = null
+  }, 250)
+}
+
+// 处理歌词双击事件（取消延迟，跳转播放位置）
+const handleLyricDblClick = (time: number) => {
+  if (clickTimer.value) {
+    clearTimeout(clickTimer.value)
+    clickTimer.value = null
+  }
+  seekToLyric(time)
 }
 
 // 获取品质等级样式
