@@ -84,14 +84,21 @@ export async function getMusicDetail(id: number): Promise<MusicInfoResp> {
   }
 }
 
-export function getMusicResource(id: number, resourceType: string): string {
+export function getMusicResource(id: number, resourceType: string, params?: Record<string, string>): string {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '/omni/api/v1'
   const token = localStorage.getItem('omni_token') || sessionStorage.getItem('omni_token')
 
   // 后端接口是 POST，返回文件流
   // video 标签无法发送 POST 请求，需要后端支持 GET 方式访问资源
   // 构造 GET 请求 URL，token 通过查询参数传递
-  const url = `${baseUrl}/music/resource/fetch?id=${id}&resourceType=${resourceType}`
+  let url = `${baseUrl}/music/resource/fetch?id=${id}&resourceType=${resourceType}`
+
+  // 添加额外查询参数
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      url += `&${key}=${encodeURIComponent(value)}`
+    }
+  }
 
   if (token) {
     return  `${url}&token=${encodeURIComponent(token)}`

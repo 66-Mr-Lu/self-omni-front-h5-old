@@ -33,6 +33,20 @@
               </div>
             </div>
 
+            <!-- 翻译切换按钮 -->
+            <div class="flex justify-end px-4 pb-2">
+              <button
+                @click.stop="toggleTranslation"
+                class="translation-toggle-btn px-3 py-1.5 rounded-full text-xs transition-all duration-300"
+                :class="{
+                  'bg-purple-500/30 text-purple-300': showTranslation,
+                  'bg-white/10 text-white/50': !showTranslation
+                }"
+              >
+                译
+              </button>
+            </div>
+
             <!-- 滚动歌词区域（单击返回播放页面，双击歌词跳转到对应时间） -->
             <div 
               class="lyrics-wrapper relative flex-1 min-h-0 overflow-hidden"
@@ -62,6 +76,10 @@
                   @dblclick="handleLyricDblClick(line.time)"
                 >
                   {{ line.text }}
+                  <!-- 翻译文本 -->
+                  <div v-if="showTranslation && line.translation" class="lyric-translation">
+                    {{ line.translation }}
+                  </div>
                 </div>
 
                 <!-- 底部 spacer：使末行歌词能滚动到中间位置 -->
@@ -268,10 +286,13 @@ const musicStore = useMusicStore()
 interface LyricLine {
   time: number
   text: string
+  translation?: string
 }
 
 const lyrics = ref<LyricLine[]>([])
 const hasLyrics = ref(false)
+const hasTranslation = ref(false)
+const showTranslation = ref(false)
 
 // 解析 LRC 格式歌词
 const parseLrc = (lrcText: string): LyricLine[] => {
@@ -349,24 +370,53 @@ const cyclePlayMode = () => {
 // 获取歌词资源
 const fetchLyrics = async (songId: number) => {
   try {
+    // 获取用户语言，默认 zh
+    const userLang = localStorage.getItem('user_lang') || 'zh'
+    
+    // 并行请求原歌词和翻译歌词
     const lyricUrl = getMusicResource(songId, 'lyric')
-    const response = await fetch(lyricUrl)
+    const tlyricUrl = getMusicResource(songId, 'tlyric', { lang: userLang })
     
-    if (!response.ok) {
+    const [lyricResult, tlyricResult] = await Promise.allSettled([
+      fetch(lyricUrl),
+      fetch(tlyricUrl)
+    ])
+    
+    // 处理原歌词
+    if (lyricResult.status === 'fulfilled' && lyricResult.value.ok) {
+      const lrcText = await lyricResult.value.text()
+      if (lrcText.trim()) {
+        lyrics.value = parseLrc(lrcText)
+        hasLyrics.value = lyrics.value.length > 0
+      } else {
+        hasLyrics.value = false
+      }
+    } else {
       hasLyrics.value = false
-      return
     }
     
-    const lrcText = await response.text()
-    if (!lrcText.trim()) {
-      hasLyrics.value = false
-      return
+    // 处理翻译歌词
+    if (tlyricResult.status === 'fulfilled' && tlyricResult.value.ok) {
+      const tlyricText = await tlyricResult.value.text()
+      if (tlyricText.trim()) {
+        const translations = parseLrc(tlyricText)
+        // 按时间戳将翻译合并到原歌词中
+        if (lyrics.value.length > 0) {
+          const transMap = new Map(translations.map(t => [t.time, t.text]))
+          lyrics.value.forEach(line => {
+            line.translation = transMap.get(line.time)
+          })
+        }
+        hasTranslation.value = translations.length > 0
+      } else {
+        hasTranslation.value = false
+      }
+    } else {
+      hasTranslation.value = false
     }
-    
-    lyrics.value = parseLrc(lrcText)
-    hasLyrics.value = lyrics.value.length > 0
   } catch {
     hasLyrics.value = false
+    hasTranslation.value = false
   }
 }
 
@@ -422,9 +472,23 @@ watch(() => musicStore.currentSong, async (newSong) => {
   if (newSong) {
     lyrics.value = []
     hasLyrics.value = false
+    hasTranslation.value = false
+    showTranslation.value = false
     await fetchLyrics(newSong.id)
   }
 })
+
+// 切换翻译显示
+const toggleTranslation = () => {
+  if (!hasTranslation.value) {
+    showToast({
+      message: '暂无翻译资源',
+      position: 'top'
+    })
+    return
+  }
+  showTranslation.value = !showTranslation.value
+}
 
 // 监听歌词索引变化，触发滚动
 watch(currentLyricIndex, () => {
@@ -708,7 +772,14 @@ onMounted(() => {
 .normal-lyric {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.3);
-  transform: scale(1);
+  transform: scale(0.95);
+}
+
+.lyric-translation {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+  line-height: 1.4;
 }
 
 .lyric-line:active {
