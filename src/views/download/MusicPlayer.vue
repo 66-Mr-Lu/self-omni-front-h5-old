@@ -376,7 +376,7 @@ const scrollToCurrentLyric = () => {
   // 用户正在手动滚动浏览时，不自动跳转
   if (userScrolling.value) return
   
-  const lyricElement = lyricsContainerRef.value.children[currentLyricIndex.value] as HTMLElement
+  const lyricElement = lyricsContainerRef.value.children[currentLyricIndex.value + 1] as HTMLElement
   if (!lyricElement) return
   
   lyricElement.scrollIntoView({
