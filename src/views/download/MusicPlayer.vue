@@ -697,12 +697,12 @@ onMounted(() => {
 }
 
 .current-lyric {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: #ffffff;
-  transform: scale(1.1);
-  text-shadow: 0 0 20px rgba(168, 85, 247, 0.8), 0 0 40px rgba(168, 85, 247, 0.4);
-  letter-spacing: 1px;
+  transform: scale(1.05);
+  text-shadow: 0 0 15px rgba(168, 85, 247, 0.8), 0 0 30px rgba(168, 85, 247, 0.4);
+  letter-spacing: 0.5px;
 }
 
 .normal-lyric {
