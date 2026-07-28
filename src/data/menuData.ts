@@ -257,6 +257,16 @@ export const menuData: TopCategory[] = [
         tags: ['B站', 'bilibili', '视频', '下载', 'Bilibili']
       },
       { 
+        id: 'music-decrypt', 
+        name: '音乐解密', 
+        icon: '🔓', 
+        action: 'musicDecrypt', 
+        priority: 11, 
+        routePath: '/resource/music-decrypt',
+        desc: '解密加密音乐文件，支持ncm、qmc、kgm等格式',
+        tags: ['音乐', '解密', 'ncm', 'qmc', 'kgm', '加密']
+      },
+      { 
         id: 'music-player', 
         name: '音乐播放', 
         icon: '🎵', 

@@ -56,6 +56,8 @@ const handleChildClick = (item: LeafMenu) => {
   // 根据菜单项ID跳转到对应页面
   if (item.id === 'bilibili-download') {
     router.push('/resource/bilibili-download')
+  } else if (item.id === 'music-decrypt') {
+    router.push('/resource/music-decrypt')
   } else if (item.id === 'music-player') {
     router.push('/resource/music-list')
   } else if (item.id === 'video-list') {

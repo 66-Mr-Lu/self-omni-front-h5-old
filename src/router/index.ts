@@ -25,6 +25,7 @@ const VideoListPage = () => import('@/views/download/VideoList.vue')
 const VideoPlayerPage = () => import('@/views/download/VideoPlayer.vue')
 const MusicPlayerPage = () => import('@/views/download/MusicPlayer.vue')
 const MusicListPage = () => import('@/views/download/MusicList.vue')
+const MusicDecryptPage = () => import('@/views/download/MusicDecrypt.vue')
 
 // 登录页面（懒加载）
 const LoginPage = () => import('@/views/login/index.vue')
@@ -201,6 +202,12 @@ const routes: RouteRecordRaw[] = [
         path: 'resource/music-player/:id',
         name: 'MusicPlayer',
         component: MusicPlayerPage,
+        meta: { categoryId: 'resource', requiresAuth: false }
+      },
+      {
+        path: 'resource/music-decrypt',
+        name: 'MusicDecrypt',
+        component: MusicDecryptPage,
         meta: { categoryId: 'resource', requiresAuth: false }
       },
       {
