@@ -108,6 +108,7 @@
       :title="previewResult?.title || '音乐预览'"
       confirm-button-text="关闭"
       class="preview-dialog"
+      @update:show="handlePreviewClose"
     >
       <div v-if="previewResult" class="preview-content">
         <div class="preview-cover w-full aspect-square rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 overflow-hidden">
@@ -115,6 +116,7 @@
           <span v-else class="text-4xl">🎵</span>
         </div>
         <audio
+          ref="audioRef"
           :src="previewUrl"
           controls
           class="w-full h-10"
@@ -145,6 +147,7 @@ const errorMessage = ref('')
 const showPreview = ref(false)
 const previewResult = ref<DecryptResult | null>(null)
 const previewUrl = ref('')
+const audioRef = ref<HTMLAudioElement | null>(null)
 
 const goBack = () => {
   router.back()
@@ -221,6 +224,20 @@ const previewMusic = (result: DecryptResult) => {
   previewResult.value = result
   previewUrl.value = URL.createObjectURL(result.blob)
   showPreview.value = true
+}
+
+const handlePreviewClose = (visible: boolean) => {
+  if (!visible) {
+    if (audioRef.value) {
+      audioRef.value.pause()
+      audioRef.value.currentTime = 0
+    }
+    if (previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = ''
+    }
+    previewResult.value = null
+  }
 }
 </script>
 
