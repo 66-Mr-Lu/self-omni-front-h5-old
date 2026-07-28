@@ -272,3 +272,75 @@ export function SplitFilename(n: string): { name: string; ext: string } {
     name: n.substring(0, pos),
   };
 }
+
+// 已知加密扩展名列表（根据您的 switch 中所有加密 case 汇总）
+const ENCRYPTED_EXTENSIONS = new Set([
+  'mg3d', 'ncm', 'uc', 'kwm', 'xm', 'tm0', 'tm3',
+  'qmc0', 'qmc3', 'qmc2', 'qmc4', 'qmc6', 'qmc8', 'qmcflac', 'qmcogg', 'tkm',
+  'bkcmp3', 'bkcm4a', 'bkcflac', 'bkcwav', 'bkcape', 'bkcogg', 'bkcwma',
+  'mggl', 'mflac', 'mflac0', 'mflach', 'mgg', 'mgg1', 'mgg0', 'mmp4',
+  '666c6163', '6d7033', '6f6767', '6d3461', '776176',
+  'tm2', 'tm6', 'cache', 'vpr', 'kgm', 'kgma', 'x2m', 'x3m'
+]);
+
+/**
+ * 解析加密文件名，提取加密扩展名、真实音频扩展名和纯文件名
+ * @param filename 原始文件名
+ * @returns { encExt: 加密格式后缀, realExt: 真实音频后缀, name: 纯文件名（不含任何后缀） }
+ */
+export function parseEncryptedFilename(filename: string): {
+  name: string;
+  ext: string;
+} {
+  const parts = filename.split('.');
+  if (parts.length < 2) {
+    // 无点，视为无扩展名
+    return { ext: '', name: filename };
+  }
+
+  // 从后往前查找加密扩展名（优先识别，因为可能有多个点）
+  let encExt = '';
+  let realExt = '';
+  let nameParts: string[] = [];
+
+  // 1. 检查最后一个部分是否为常见音频后缀
+  const audioExts = new Set(['flac', 'mp3', 'm4a', 'ogg', 'wma', 'wav', 'aac', 'dff']);
+  const lastPart = parts[parts.length - 1].toLowerCase();
+
+  if (audioExts.has(lastPart)) {
+    // 最后一个部分是真实音频扩展名
+    realExt = lastPart;
+    // 加密扩展名可能在倒数第二个部分
+    if (parts.length >= 3) {
+      const candidate = parts[parts.length - 2].toLowerCase();
+      if (ENCRYPTED_EXTENSIONS.has(candidate)) {
+        encExt = candidate;
+        nameParts = parts.slice(0, parts.length - 2);
+      } else {
+        // 倒数第二个不是加密扩展名，可能是普通文件（如 song.flac）
+        encExt = '';
+        nameParts = parts.slice(0, parts.length - 1);
+      }
+    } else {
+      // 只有两个部分，如 song.flac
+      encExt = '';
+      nameParts = parts.slice(0, parts.length - 1);
+    }
+  } else if (ENCRYPTED_EXTENSIONS.has(lastPart)) {
+    // 最后一个部分本身就是加密扩展名（如 song.kgm）
+    encExt = lastPart;
+    realExt = ''; // 没有真实音频扩展名
+    nameParts = parts.slice(0, parts.length - 1);
+  } else {
+    // 未知扩展名，当作普通文件处理
+    encExt = '';
+    realExt = lastPart;
+    nameParts = parts.slice(0, parts.length - 1);
+  }
+
+  const routeExt = encExt || realExt || '';
+  return {
+    name: nameParts.join('.') || filename,
+    ext: routeExt,
+  }
+}

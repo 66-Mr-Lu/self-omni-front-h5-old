@@ -11,7 +11,7 @@ import { Decrypt as TmDecrypt } from '@/decrypt/tm';
 // import { Decrypt as JooxDecrypt } from '@/decrypt/joox';
 import { Decrypt as XimalayaDecrypt } from './ximalaya';
 import { DecryptResult, FileInfo } from '@/decrypt/entity';
-import { SplitFilename } from '@/decrypt/utils';
+import {parseEncryptedFilename} from '@/decrypt/utils';
 import { storage } from '@/utils/storage';
 import InMemoryStorage from '@/utils/storage/InMemoryStorage';
 
@@ -21,7 +21,8 @@ export async function Decrypt(file: FileInfo, config: Record<string, any>): Prom
     await storage.setAll(config);
   }
 
-  const raw = SplitFilename(file.name);
+  // const raw = SplitFilename(file.name);
+  const raw = parseEncryptedFilename(file.name);
   let rt_data: DecryptResult;
   switch (raw.ext) {
     case 'mg3d': // Migu Wav
