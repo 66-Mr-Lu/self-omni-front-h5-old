@@ -2,10 +2,15 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
   plugins: [
     vue(),
+    nodePolyfills({
+      // 只包含需要的模块，避免体积过大
+      include: ['buffer'],
+    }),
     VitePWA({
       // PWA 注册时机：提示用户更新
       registerType: 'prompt',
