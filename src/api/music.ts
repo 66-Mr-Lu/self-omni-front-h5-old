@@ -48,7 +48,14 @@ export async function getMusicList(page: number = 1, size: number = 20, keyword?
     })
 
     if (response.code === 200 && response.data) {
-      return response.data
+      // 标准化时长和码率（兼容毫秒/秒和bps/kbps两种格式）
+      const data = response.data
+      data.records = data.records.map(item => ({
+        ...item,
+        duration: item.duration ? normalizeDuration(item.duration) : item.duration,
+        bitrate: item.bitrate ? normalizeBitrate(item.bitrate) : item.bitrate
+      }))
+      return data
     } else {
       throw new Error(response.message || '获取音乐列表失败')
     }
@@ -72,7 +79,15 @@ export async function getMusicDetail(id: number): Promise<MusicInfoResp> {
     })
 
     if (response.code === 200 && response.data) {
-      return response.data
+      // 标准化时长和码率（兼容毫秒/秒和bps/kbps两种格式）
+      const data = response.data
+      if (data.duration) {
+        data.duration = normalizeDuration(data.duration)
+      }
+      if (data.bitrate) {
+        data.bitrate = normalizeBitrate(data.bitrate)
+      }
+      return data
     } else {
       throw new Error(response.message || '获取音乐详情失败')
     }
@@ -203,4 +218,34 @@ export async function updateMusic(data: UpdateMusicRequest, file?: File): Promis
     }
     throw new Error('网络请求失败，请检查网络连接')
   }
+}
+
+/**
+ * 标准化时长：将毫秒级时长转换为秒
+ * 判断规则：时长大于 20000 视为毫秒，除以 1000 转为秒
+ * @param duration 时长（可能是毫秒或秒）
+ * @returns 时长（秒）
+ */
+export function normalizeDuration(duration: number): number {
+  if (!duration || duration <= 0) return 0
+  // 大于 20000 判定为毫秒，转换为秒
+  if (duration > 20000) {
+    return Math.round(duration / 1000)
+  }
+  return duration
+}
+
+/**
+ * 标准化码率：将 bps 转换为 kbps
+ * 判断规则：码率大于 50000 视为 bps，除以 1000 转为 kbps
+ * @param bitrate 码率（可能是 bps 或 kbps）
+ * @returns 码率（kbps）
+ */
+export function normalizeBitrate(bitrate: number): number {
+  if (!bitrate || bitrate <= 0) return 0
+  // 大于 50000 判定为 bps，转换为 kbps
+  if (bitrate > 50000) {
+    return Math.round(bitrate / 1000)
+  }
+  return bitrate
 }

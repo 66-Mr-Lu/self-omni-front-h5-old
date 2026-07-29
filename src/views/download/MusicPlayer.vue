@@ -127,7 +127,7 @@
                   >
                     {{ musicStore.currentSong.qualityLevel }}
                   </span>
-                  <span class="text-white/40 text-xs">{{ musicStore.currentSong.bitrate }}kbps</span>
+                  <span class="text-white/40 text-xs">{{ normalizeBitrate(musicStore.currentSong.bitrate) }}kbps</span>
                 </div>
 
                 <!-- 第三行：歌词（只显示一行），点击切换到歌词模式 -->
@@ -259,7 +259,7 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
-import { getMusicDetail, getMusicResource } from '@/api/music'
+import { getMusicDetail, getMusicResource, normalizeDuration, normalizeBitrate } from '@/api/music'
 import { useMusicStore, type PlayMode } from '@/stores/music'
 
 const router = useRouter()
@@ -628,9 +628,9 @@ const fetchMusicDetail = async () => {
     // 更新当前歌曲信息
     musicStore.setCurrentSong(detail)
     
-    // 设置时长（优先使用后台返回的时长）
+    // 设置时长（优先使用后台返回的时长，兼容毫秒/秒两种格式）
     if (detail.duration) {
-      musicStore.setDuration(detail.duration)
+      musicStore.setDuration(normalizeDuration(detail.duration))
     }
     
     // 添加到播放列表（如果不存在）
