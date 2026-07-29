@@ -18,6 +18,7 @@ export interface DecryptResult {
   message?: string;
   rawExt?: string;
   rawFilename?: string;
+  originalFilename?: string;
 }
 
 export interface FileInfo {

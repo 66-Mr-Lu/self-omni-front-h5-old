@@ -158,6 +158,8 @@ export interface UploadMusicRequest {
   bitrate?: number
   sampleRate?: number
   bitDepth?: number
+  mime?: string
+  source?: string
 }
 
 /**
@@ -168,7 +170,7 @@ export interface UploadMusicRequest {
  */
 export async function uploadMusic(data: UploadMusicRequest, file: File): Promise<MusicInfoResp> {
   try {
-    const response = await request.upload<MusicInfoResp>('/music/upload', data, file)
+    const response = await request.upload<MusicInfoResp>('/music/upload-audio', data, file)
 
     if (response.code === 200 && response.data) {
       return response.data
@@ -186,10 +188,17 @@ export async function uploadMusic(data: UploadMusicRequest, file: File): Promise
 // 更新音乐请求参数
 export interface UpdateMusicRequest {
   id: number
-  title?: string
-  artist?: string
+  title: string
+  artist: string
   album?: string
+  duration: number
   desc?: string
+  codec?: string
+  bitrate?: number
+  sampleRate?: number
+  bitDepth?: number
+  mime?: string
+  source?: string
 }
 
 /**
@@ -202,7 +211,7 @@ export async function updateMusic(data: UpdateMusicRequest, file?: File): Promis
   try {
     let response
     if (file) {
-      response = await request.upload<MusicInfoResp>('/music/update', data, file)
+      response = await request.upload<MusicInfoResp>('/music/upload-audio', data, file)
     } else {
       response = await request.post<MusicInfoResp>('/music/update', data)
     }
