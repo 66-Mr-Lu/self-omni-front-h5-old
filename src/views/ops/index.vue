@@ -21,8 +21,9 @@
 </template>
 
 <script setup lang="ts">
+import request from '@/utils/axios'
 import { computed } from 'vue'
-import { showDialog } from 'vant'
+import {showDialog, showToast} from 'vant'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { menuData, getUnifiedSortedItems, type LeafMenu } from '@/data/menuData'
@@ -56,6 +57,22 @@ const handleChildClick = (item: LeafMenu) => {
   // 远程唤醒功能跳转到对应的页面
   if (item.action === 'remotePower' && item.routePath) {
     router.push(item.routePath)
+    return
+  }
+  if (item.action === 'shutdown') {
+    // 关机功能
+    showDialog({
+      title: '提示',
+      message: '确定要关机吗？',
+      showCancelButton: true,
+      confirmButtonText: '确定',
+      cancelButtonText: '取消'
+    }).then(() => {
+      // TODO: 关机操作
+      request.post("/ops/device-info/shutdown").then(() => {
+        showToast({ message: '服务器将在60秒后关机', position: 'top' });
+      })
+    })
     return
   }
 
