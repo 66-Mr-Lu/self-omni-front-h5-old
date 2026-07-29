@@ -2,6 +2,11 @@ export interface DecryptResult {
   title: string;
   album?: string;
   artist?: string;
+  duration?: number;
+  bitrate?:number;
+  codec?: string;
+  sampleRate?: number;
+  bitDepth?: number;
 
   mime: string;
   ext: string;

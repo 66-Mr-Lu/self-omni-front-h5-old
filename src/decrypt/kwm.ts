@@ -52,6 +52,12 @@ export async function Decrypt(file: File, raw_filename: string, _: string): Prom
     title,
     artist,
     ext,
+
+    duration: musicMeta.format.duration, // 单位：秒
+    sampleRate: musicMeta.format.sampleRate,      // 采样率，单位 Hz (如 44100)
+    bitrate: musicMeta.format.bitrate,         // 比特率，单位 bps (如 128000)
+    codec: musicMeta.format.codec,           // 编码格式 (如 'MPEG 1 Layer 3' 或 'FLAC')
+    bitDepth: musicMeta.format.bitsPerSample,   // 位深度 (如 16)
   };
 }
 

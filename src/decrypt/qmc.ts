@@ -68,7 +68,7 @@ export async function Decrypt(file: Blob, raw_filename: string, raw_ext: string)
   const ext = SniffAudioExt(musicDecoded, handler.ext);
   const mime = AudioMimeType[ext];
 
-  const { album, artist, imgUrl, blob, title } = await extractQQMusicMeta(
+  const { album, artist, imgUrl, blob, title, duration, bitrate, sampleRate, bitDepth, codec } = await extractQQMusicMeta(
     new Blob([musicDecoded], { type: mime }),
     raw_filename,
     ext,
@@ -84,5 +84,11 @@ export async function Decrypt(file: Blob, raw_filename: string, raw_ext: string)
     file: URL.createObjectURL(blob),
     blob: blob,
     mime: mime,
+
+    duration: duration,
+    sampleRate: sampleRate,
+    bitrate: bitrate,
+    codec: codec,
+    bitDepth: bitDepth,
   };
 }

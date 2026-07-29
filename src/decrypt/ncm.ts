@@ -9,7 +9,7 @@ import {
   // WriteMetaToFlac,
   // WriteMetaToMp3,
 } from '@/decrypt/utils';
-// import { parseBlob as metaParseBlob } from 'music-metadata-browser';
+import { parseBlob as metaParseBlob } from 'music-metadata-browser';
 // import jimp from 'jimp';
 
 import AES from 'crypto-js/aes';
@@ -55,6 +55,12 @@ class NcmDecrypt {
   oriMeta?: NcmMusicMeta;
   newMeta?: IMusicMeta;
   image?: { mime: string; buffer: ArrayBuffer; url: string };
+
+  duration?: number;
+  sampleRate?: number;
+  bitrate?: number;
+  codec?: string;
+  bitDepth?: number;
 
   constructor(buf: ArrayBuffer, filename: string) {
     const prefix = new Uint8Array(buf, 0, 8);
@@ -205,6 +211,12 @@ class NcmDecrypt {
       file: URL.createObjectURL(this.blob),
       blob: this.blob,
       mime: this.mime,
+
+      duration: this.duration,
+      sampleRate: this.sampleRate,
+      bitrate: this.bitrate,
+      codec: this.codec,
+      bitDepth: this.bitDepth,
     };
   }
 
@@ -218,6 +230,16 @@ class NcmDecrypt {
     try {
       await this._buildMeta();
       await this._writeMeta();
+
+      if (this.blob) {
+        // 新增：解析音频元数据获取技术参数
+        const metadata = await metaParseBlob(this.blob);
+        this.duration = metadata.format.duration;
+        this.sampleRate = metadata.format.sampleRate;
+        this.bitrate = metadata.format.bitrate;
+        this.codec = metadata.format.codec;
+        this.bitDepth = metadata.format.bitsPerSample;
+      }
     } catch (e) {
       console.warn('build/write meta failed, skip.', e);
     }
