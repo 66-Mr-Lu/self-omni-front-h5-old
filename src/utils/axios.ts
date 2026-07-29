@@ -141,6 +141,24 @@ const request = {
   
   delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<BaseResponse<T>> {
     return instance.delete(url, config) as Promise<BaseResponse<T>>
+  },
+  
+  upload<T = any>(url: string, data: Record<string, any>, file: File, config?: AxiosRequestConfig): Promise<BaseResponse<T>> {
+    const formData = new FormData()
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value))
+      }
+    }
+    formData.append('file', file)
+    
+    return instance.post(url, formData, {
+      ...config,
+      headers: {
+        ...config?.headers,
+        'Content-Type': 'multipart/form-data'
+      }
+    }) as Promise<BaseResponse<T>>
   }
 }
 

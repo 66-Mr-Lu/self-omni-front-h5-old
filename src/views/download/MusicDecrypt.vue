@@ -71,11 +71,25 @@
           <!-- 操作按钮 -->
           <div class="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
             <button
+              class="flex-1 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1 active:bg-red-100 transition-colors"
+              @click="deleteResult(index)"
+            >
+              <span>🗑</span>
+              <span>删除</span>
+            </button>
+            <button
               class="flex-1 py-2 bg-purple-50 text-purple-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1 active:bg-purple-100 transition-colors"
               @click="previewMusic(result)"
             >
               <span>▶</span>
               <span>预览</span>
+            </button>
+            <button
+              class="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium flex items-center justify-center gap-1 active:bg-blue-100 transition-colors"
+              @click="handleUpload(result)"
+            >
+              <span>☁</span>
+              <span>上传</span>
             </button>
             <button
               class="flex-1 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 active:opacity-80 transition-opacity"
@@ -124,17 +138,147 @@
         <p class="text-gray-500 text-xs text-center mt-2">{{ previewResult.artist }} - {{ previewResult.album }}</p>
       </div>
     </van-dialog>
+
+    <!-- 歌手匹配弹窗 -->
+    <van-dialog
+      v-model:show="showSingerMatch"
+      title="匹配音乐"
+      show-cancel-button
+      cancel-button-text="取消"
+      confirm-button-text="新增"
+      class="singer-match-dialog"
+      :style="{ width: '90%', maxWidth: '480px' }"
+      @confirm="handleAddNew"
+      @cancel="closeSingerMatch"
+    >
+      <!-- 搜索区域 -->
+      <div class="search-area mb-4">
+        <div class="flex flex-col gap-2">
+          <input
+            v-model="searchTitle"
+            type="text"
+            placeholder="歌名"
+            class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400"
+          />
+          <div class="flex gap-2">
+            <input
+              v-model="searchArtist"
+              type="text"
+              placeholder="歌手"
+              class="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-400"
+            />
+            <button
+              class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium active:opacity-80 transition-opacity"
+              @click="handleSearch"
+              :disabled="singerMatchLoading"
+            >
+              搜索
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 当前上传音乐信息（固定在第一行） -->
+      <div v-if="currentUploadResult" class="current-music bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+            <span class="text-lg">🎵</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h4 class="text-gray-800 text-sm font-medium truncate">{{ currentUploadResult.title }}</h4>
+              <span class="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] rounded-full">待上传</span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-gray-500 text-xs">{{ currentUploadResult.artist || '-' }}</span>
+              <span class="text-gray-300">|</span>
+              <span class="text-gray-400 text-xs truncate">{{ currentUploadResult.album || '-' }}</span>
+            </div>
+            <div v-if="currentUploadResult.duration || currentUploadResult.bitrate" class="flex items-center gap-2 mt-0.5">
+              <span v-if="currentUploadResult.duration" class="text-gray-400 text-[10px]">时长: {{ formatDuration(currentUploadResult.duration) }}</span>
+              <span v-if="currentUploadResult.duration && currentUploadResult.bitrate" class="text-gray-300">|</span>
+              <span v-if="currentUploadResult.bitrate" class="text-gray-400 text-[10px]">码率: {{ formatBitrate(currentUploadResult.bitrate) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 加载状态 -->
+      <div v-if="singerMatchLoading" class="flex items-center justify-center py-6">
+        <div class="w-6 h-6 border-2 border-gray-300 border-t-purple-500 rounded-full animate-spin"></div>
+        <span class="text-gray-500 text-sm ml-2">正在搜索...</span>
+      </div>
+
+      <!-- 无结果状态 -->
+      <div v-else-if="singerMatchList.length === 0" class="text-center py-6">
+        <p class="text-gray-400 text-sm">未找到匹配的音乐</p>
+        <p class="text-gray-400 text-xs mt-1">点击「新增」上传为新音乐</p>
+      </div>
+
+      <!-- 匹配列表 -->
+      <div v-else class="match-list max-h-[50vh] overflow-y-auto">
+        <div 
+          v-for="(item) in singerMatchList"
+          :key="item.id"
+          class="match-item flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+          :class="{ 'bg-purple-50 border border-purple-200': selectedMatchId === item.id }"
+          @click="selectMatch(item)"
+        >
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+            <span class="text-lg">🎵</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-gray-800 text-sm font-medium truncate">{{ item.title }}</h4>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-gray-500 text-xs">{{ item.artist }}</span>
+              <span class="text-gray-300">|</span>
+              <span class="text-gray-400 text-xs truncate">{{ item.album }}</span>
+            </div>
+            <div v-if="item.duration || item.bitrate" class="flex items-center gap-2 mt-0.5">
+              <span v-if="item.duration" class="text-gray-400 text-[10px]">时长: {{ formatDuration(item.duration) }}</span>
+              <span v-if="item.duration && item.bitrate" class="text-gray-300">|</span>
+              <span v-if="item.bitrate" class="text-gray-400 text-[10px]">码率: {{ formatBitrate(item.bitrate) }} kbps</span>
+            </div>
+          </div>
+          <div 
+            class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0"
+            :class="selectedMatchId === item.id ? 'border-purple-500 bg-purple-500' : 'border-gray-300'"
+          >
+            <span v-if="selectedMatchId === item.id" class="text-white text-xs">✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 更新按钮 -->
+      <div v-if="singerMatchList.length > 0" class="mt-4 text-center">
+        <button
+          class="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium active:opacity-80 transition-opacity"
+          @click="handleUpdate"
+          :disabled="!selectedMatchId"
+          :class="{ 'opacity-50 cursor-not-allowed': !selectedMatchId }"
+        >
+          更新选中音乐
+        </button>
+      </div>
+    </van-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { formatDuration, formatBitrate } from '@/utils/temp'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast, Dialog } from 'vant'
+import { showToast, showDialog } from 'vant'
 import { Decrypt } from '@/decrypt/index'
 import type { DecryptResult, FileInfo } from '@/decrypt/entity'
+import { 
+  listMusicInfoBySinger, 
+  uploadMusic, 
+  updateMusic, 
+  type MusicInfoResp 
+} from '@/api/music'
 
-const [vanDialog] = [Dialog]
+
 
 const router = useRouter()
 
@@ -148,6 +292,14 @@ const showPreview = ref(false)
 const previewResult = ref<DecryptResult | null>(null)
 const previewUrl = ref('')
 const audioRef = ref<HTMLAudioElement | null>(null)
+
+const showSingerMatch = ref(false)
+const singerMatchLoading = ref(false)
+const singerMatchList = ref<MusicInfoResp[]>([])
+const selectedMatchId = ref<number | null>(null)
+const currentUploadResult = ref<DecryptResult | null>(null)
+const searchTitle = ref('')
+const searchArtist = ref('')
 
 const goBack = () => {
   router.back()
@@ -209,6 +361,26 @@ const decryptMusic = async () => {
   }
 }
 
+const deleteResult = (index: number) => {
+  const result = decryptResults.value[index]
+  showDialog({
+    title: '确认删除',
+    message: `确定要删除 "${result.title}" 吗？`,
+    showCancelButton: true,
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#ef4444'
+  }).then(() => {
+    decryptResults.value.splice(index, 1)
+    showToast({
+      message: '删除成功',
+      position: 'top'
+    })
+  }).catch(() => {
+    // 用户取消
+  })
+}
+
 const downloadMusic = (result: DecryptResult) => {
   const url = URL.createObjectURL(result.blob)
   const a = document.createElement('a')
@@ -238,6 +410,172 @@ const handlePreviewClose = (visible: boolean) => {
     }
     previewResult.value = null
   }
+}
+
+const handleUpload = async (result: DecryptResult) => {
+  currentUploadResult.value = result
+  searchTitle.value = result.title
+  searchArtist.value = result.artist || ''
+  singerMatchList.value = []
+  selectedMatchId.value = null
+  showSingerMatch.value = true
+  
+  if (result.artist) {
+    await handleSearch()
+  }
+}
+
+const handleSearch = async () => {
+  const title = searchTitle.value.trim()
+  const artist = searchArtist.value.trim()
+  
+  if (!title && !artist) {
+    showToast({
+      message: '请输入歌名或歌手',
+      position: 'top'
+    })
+    return
+  }
+  
+  singerMatchLoading.value = true
+  singerMatchList.value = []
+  selectedMatchId.value = null
+  
+  try {
+    singerMatchList.value = await listMusicInfoBySinger(title, artist)
+  } catch (error) {
+    console.error('搜索失败:', error)
+    showToast({
+      message: '搜索失败',
+      position: 'top'
+    })
+  } finally {
+    singerMatchLoading.value = false
+  }
+}
+
+// const formatDuration = (duration: number): string => {
+//   const seconds = duration > 20000 ? Math.floor(duration / 1000) : duration
+//   const mins = Math.floor(seconds / 60)
+//   const secs = Math.floor(seconds % 60)
+//   return `${mins}:${secs.toString().padStart(2, '0')}`
+// }
+//
+// const formatBitrate = (bitrate: number): string => {
+//   const kbps = bitrate > 50000 ? Math.floor(bitrate / 1000) : bitrate
+//   return `${kbps} kbps`
+// }
+
+const selectMatch = (item: MusicInfoResp) => {
+  selectedMatchId.value = selectedMatchId.value === item.id ? null : item.id
+}
+
+const closeSingerMatch = () => {
+  showSingerMatch.value = false
+  singerMatchList.value = []
+  selectedMatchId.value = null
+  currentUploadResult.value = null
+}
+
+const handleUpdate = async () => {
+  if (!selectedMatchId.value || !currentUploadResult.value) return
+  
+  const result = currentUploadResult.value
+  const matchId = selectedMatchId.value
+  
+  showSingerMatch.value = false
+  
+  try {
+    showToast({
+      message: '正在更新...',
+      position: 'top',
+      duration: 0,
+      icon: 'loading'
+    })
+    
+    const file = blobToFile(result.blob, `${result.title}.${result.ext}`)
+    await updateMusic({
+      id: matchId,
+      title: result.title,
+      artist: result.artist || '',
+      album: result.album || ''
+    }, file)
+    
+    showToast({
+      message: '更新成功',
+      position: 'top'
+    })
+    
+    const index = decryptResults.value.findIndex(r => r === result)
+    if (index !== -1) {
+      decryptResults.value.splice(index, 1)
+    }
+  } catch (error) {
+    showToast({
+      message: error instanceof Error ? error.message : '更新失败',
+      position: 'top'
+    })
+  } finally {
+    singerMatchList.value = []
+    selectedMatchId.value = null
+    currentUploadResult.value = null
+  }
+}
+
+const handleAddNew = async () => {
+  if (!currentUploadResult.value) return
+  
+  await performAddNew(currentUploadResult.value)
+}
+
+const performAddNew = async (result: DecryptResult) => {
+  try {
+    showToast({
+      message: '正在上传...',
+      position: 'top',
+      duration: 0,
+      icon: 'loading'
+    })
+    
+    const file = blobToFile(result.blob, `${result.title}.${result.ext}`)
+    await uploadMusic({
+      title: result.title,
+      artist: result.artist || '',
+      album: result.album || '',
+      duration: result.duration || 0,
+      codec: result.codec,
+      bitrate: result.bitrate,
+      sampleRate: result.sampleRate,
+      bitDepth: result.bitDepth
+    }, file)
+    
+    showToast({
+      message: '上传成功',
+      position: 'top'
+    })
+    
+    const index = decryptResults.value.findIndex(r => r === result)
+    if (index !== -1) {
+      decryptResults.value.splice(index, 1)
+    }
+  } catch (error) {
+    showToast({
+      message: error instanceof Error ? error.message : '上传失败',
+      position: 'top'
+    })
+  } finally {
+    closeSingerMatch()
+  }
+}
+
+const blobToFile = (blob: Blob, filename: string): File => {
+  const file = blob as unknown as File
+  if (file.name) return file
+  
+  const fileWithName = new File([blob], filename, {
+    type: blob.type || 'audio/mpeg'
+  })
+  return fileWithName
 }
 </script>
 
@@ -270,5 +608,13 @@ const handlePreviewClose = (visible: boolean) => {
 
 .preview-content {
   padding: 16px;
+}
+
+.singer-match-dialog :deep(.van-dialog__content) {
+  padding: 12px;
+}
+
+.match-item:active {
+  opacity: 0.8;
 }
 </style>

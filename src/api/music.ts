@@ -106,3 +106,101 @@ export function getMusicResource(id: number, resourceType: string, params?: Reco
 
   return url
 }
+
+/**
+ * 根据歌手名查询音乐列表
+ * @param singer 歌手名称
+ * @returns 音乐列表
+ */
+export async function listMusicInfoBySinger(title: string, singer: string): Promise<MusicInfoResp[]> {
+  try {
+    const response = await request.post<MusicInfoResp[]>('/music/listByMetainfo', {
+      title,
+      artist: singer
+    })
+
+    if (response.code === 200 && response.data) {
+      return response.data
+    } else {
+      throw new Error(response.message || '查询音乐列表失败')
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('网络请求失败，请检查网络连接')
+  }
+}
+
+// 上传音乐请求参数
+export interface UploadMusicRequest {
+  title: string
+  artist: string
+  album: string
+  duration: number
+  desc?: string
+  codec?: string
+  bitrate?: number
+  sampleRate?: number
+  bitDepth?: number
+}
+
+/**
+ * 新增上传音乐
+ * @param data 音乐信息
+ * @param file 音频文件
+ * @returns 上传结果
+ */
+export async function uploadMusic(data: UploadMusicRequest, file: File): Promise<MusicInfoResp> {
+  try {
+    const response = await request.upload<MusicInfoResp>('/music/upload', data, file)
+
+    if (response.code === 200 && response.data) {
+      return response.data
+    } else {
+      throw new Error(response.message || '上传失败')
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('网络请求失败，请检查网络连接')
+  }
+}
+
+// 更新音乐请求参数
+export interface UpdateMusicRequest {
+  id: number
+  title?: string
+  artist?: string
+  album?: string
+  desc?: string
+}
+
+/**
+ * 更新音乐信息
+ * @param data 更新数据
+ * @param file 音频文件（可选）
+ * @returns 更新结果
+ */
+export async function updateMusic(data: UpdateMusicRequest, file?: File): Promise<MusicInfoResp> {
+  try {
+    let response
+    if (file) {
+      response = await request.upload<MusicInfoResp>('/music/update', data, file)
+    } else {
+      response = await request.post<MusicInfoResp>('/music/update', data)
+    }
+
+    if (response.code === 200 && response.data) {
+      return response.data
+    } else {
+      throw new Error(response.message || '更新失败')
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('网络请求失败，请检查网络连接')
+  }
+}

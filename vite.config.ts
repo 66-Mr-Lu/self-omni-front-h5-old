@@ -97,5 +97,13 @@ export default defineConfig({
   server: {
     port: Number(process.env.VITE_DEV_PORT) || 3000,
     open: true,
+  },
+  build: {
+    target: ['es2022'],
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   }
 })
