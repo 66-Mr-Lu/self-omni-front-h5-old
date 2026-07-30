@@ -229,6 +229,35 @@ export async function updateMusic(data: UpdateMusicRequest, file?: File): Promis
   }
 }
 
+// 通过分享链接添加音乐请求参数
+export interface AddMusicByShareLinkRequest {
+  shareUrl: string  // 分享链接
+  title: string     // 歌曲名称
+  artist: string    // 歌手名称
+}
+
+/**
+ * 通过分享链接添加音乐
+ * @param data 分享链接、歌曲名称、歌手名称
+ * @returns 新增的音乐信息
+ */
+export async function addMusicByShareLink(data: AddMusicByShareLinkRequest): Promise<MusicInfoResp> {
+  try {
+    const response = await request.post<MusicInfoResp>('/music/add-by-share-link', data)
+
+    if (response.code === 200 && response.data) {
+      return response.data
+    } else {
+      throw new Error(response.message || '添加音乐失败')
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error
+    }
+    throw new Error('网络请求失败，请检查网络连接')
+  }
+}
+
 /**
  * 标准化时长：将毫秒级时长转换为秒
  * 判断规则：时长大于 20000 视为毫秒，除以 1000 转为秒
