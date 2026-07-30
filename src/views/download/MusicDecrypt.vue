@@ -548,6 +548,8 @@ const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   if (target.files && target.files.length > 0) {
     filesToDecrypt.value = Array.from(target.files)
+    // 清空 input value，确保下次选择相同文件也能触发 change 事件
+    target.value = ''
     decryptMusic()
   }
 }
