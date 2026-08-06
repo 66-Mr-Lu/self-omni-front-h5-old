@@ -294,7 +294,8 @@ const hasLyrics = ref(false)
 const hasTranslation = ref(false)
 const showTranslation = ref(false)
 
-// 解析 LRC 格式歌词
+// 解析标准 LRC 格式歌词
+// 格式示例：[00:12.34]歌词文本
 const parseLrc = (lrcText: string): LyricLine[] => {
   const lines = lrcText.split('\n')
   const result: LyricLine[] = []
@@ -308,6 +309,35 @@ const parseLrc = (lrcText: string): LyricLine[] => {
       const milliseconds = parseInt(matches[3].padEnd(3, '0'))
       const time = minutes * 60 + seconds + milliseconds / 1000
       const text = line.replace(timeRegex, '').trim()
+      if (text) {
+        result.push({ time, text })
+      }
+    }
+  })
+
+  return result.sort((a, b) => a.time - b.time)
+}
+
+// 解析逐字歌词格式（又称卡拉OK格式）
+// 格式示例：[0,1750]<0,250,0>Legends<250,250,0>Never<500,250,0>Die
+// 特点：
+//   1. 行时间戳：[毫秒时间,持续时间]，需转秒
+//   2. 逐字标签：<相对时间,持续时间,0>文字
+//   3. 元数据行：[id:...]、[ar:...] 等无数字逗号格式，会被自然过滤
+const parseWordByWordLrc = (lrcText: string): LyricLine[] => {
+  const lines = lrcText.split('\n')
+  const result: LyricLine[] = []
+
+  lines.forEach(line => {
+    // 匹配 [毫秒时间,持续时间] 格式的时间戳
+    const timeMatch = line.match(/\[(\d+),(\d+)\]/)
+    if (timeMatch) {
+      // 毫秒转秒
+      const time = parseInt(timeMatch[1]) / 1000
+      // 移除 [毫秒时间,持续时间] 时间戳
+      let text = line.replace(/\[\d+,\d+\]/, '')
+      // 移除所有逐字标签 <相对时间,持续时间,0>
+      text = text.replace(/<[^>]*>/g, '').trim()
       if (text) {
         result.push({ time, text })
       }
@@ -422,11 +452,19 @@ const fetchLyrics = async (songId: number) => {
       fetch(tlyricUrl)
     ])
     
-    // 处理原歌词
+    // 处理原歌词（格式回退：标准 LRC → 逐字歌词 → 无歌词）
     if (lyricResult.status === 'fulfilled' && lyricResult.value.ok) {
       const lrcText = await lyricResult.value.text()
       if (lrcText.trim()) {
-        lyrics.value = parseLrc(lrcText)
+        // 优先尝试标准 LRC 格式
+        let parsed = parseLrc(lrcText)
+        if (parsed.length === 0) {
+          // 检查是否包含逐字歌词特征（<数字,数字,数字> 模式）
+          if (/\<\d+,\d+,\d+\>/.test(lrcText)) {
+            parsed = parseWordByWordLrc(lrcText)
+          }
+        }
+        lyrics.value = parsed
         hasLyrics.value = lyrics.value.length > 0
       } else {
         hasLyrics.value = false
