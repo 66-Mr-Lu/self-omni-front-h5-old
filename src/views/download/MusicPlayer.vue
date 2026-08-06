@@ -299,7 +299,7 @@ const parseLrc = (lrcText: string): LyricLine[] => {
   const lines = lrcText.split('\n')
   const result: LyricLine[] = []
   const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/
-  
+
   lines.forEach(line => {
     const matches = line.match(timeRegex)
     if (matches) {
@@ -313,8 +313,29 @@ const parseLrc = (lrcText: string): LyricLine[] => {
       }
     }
   })
-  
+
   return result.sort((a, b) => a.time - b.time)
+}
+
+// 解析酷狗翻译歌词格式（JSON 二维数组，按行顺序对应原歌词，无时间戳）
+// 格式示例：[[""],["翻译文本"],[""],...]，每个元素为单元素数组，空字符串表示该行无翻译
+const parseKugouTlyric = (tlyricText: string): string[] => {
+  const trimmed = tlyricText.trim()
+  // 酷狗格式以 [ 开头，且是合法 JSON 数组
+  if (!trimmed.startsWith('[')) return []
+  try {
+    const arr = JSON.parse(trimmed)
+    if (!Array.isArray(arr)) return []
+    // 每个元素取首项作为翻译文本
+    return arr.map(item => {
+      if (Array.isArray(item) && item.length > 0) {
+        return String(item[0] ?? '')
+      }
+      return ''
+    })
+  } catch {
+    return []
+  }
 }
 
 // 获取当前歌词索引
@@ -399,15 +420,27 @@ const fetchLyrics = async (songId: number) => {
     if (tlyricResult.status === 'fulfilled' && tlyricResult.value.ok) {
       const tlyricText = await tlyricResult.value.text()
       if (tlyricText.trim()) {
-        const translations = parseLrc(tlyricText)
-        // 按时间戳将翻译合并到原歌词中
-        if (lyrics.value.length > 0) {
-          const transMap = new Map(translations.map(t => [t.time, t.text]))
-          lyrics.value.forEach(line => {
-            line.translation = transMap.get(line.time)
+        // 优先尝试酷狗翻译格式（JSON 二维数组，按行索引对应原歌词）
+        const kugouTranslations = parseKugouTlyric(tlyricText)
+        if (kugouTranslations.length > 0 && lyrics.value.length > 0) {
+          lyrics.value.forEach((line, index) => {
+            const trans = kugouTranslations[index]
+            if (trans && trans.trim()) {
+              line.translation = trans
+            }
           })
+          hasTranslation.value = kugouTranslations.some(t => t.trim() !== '')
+        } else {
+          // 回退到 LRC 格式：按时间戳将翻译合并到原歌词中
+          const translations = parseLrc(tlyricText)
+          if (lyrics.value.length > 0) {
+            const transMap = new Map(translations.map(t => [t.time, t.text]))
+            lyrics.value.forEach(line => {
+              line.translation = transMap.get(line.time)
+            })
+          }
+          hasTranslation.value = translations.length > 0
         }
-        hasTranslation.value = translations.length > 0
       } else {
         hasTranslation.value = false
       }
