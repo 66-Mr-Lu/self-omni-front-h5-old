@@ -317,25 +317,44 @@ const parseLrc = (lrcText: string): LyricLine[] => {
   return result.sort((a, b) => a.time - b.time)
 }
 
-// 解析酷狗翻译歌词格式（JSON 二维数组，按行顺序对应原歌词，无时间戳）
-// 格式示例：[[""],["翻译文本"],[""],...]，每个元素为单元素数组，空字符串表示该行无翻译
+// 解析酷狗翻译歌词格式（二维数组，按行顺序对应原歌词，无时间戳）
+// 兼容两种变体：
+//   1. 标准 JSON：[["文本"],[""],...]（字符串带双引号）
+//   2. 非标准格式：[[文本 ],[  ],...]（字符串不带双引号，JSON.parse 会失败）
 const parseKugouTlyric = (tlyricText: string): string[] => {
   const trimmed = tlyricText.trim()
-  // 酷狗格式以 [ 开头，且是合法 JSON 数组
+  // 酷狗格式以 [ 开头
   if (!trimmed.startsWith('[')) return []
+
+  // 优先尝试标准 JSON 解析
   try {
     const arr = JSON.parse(trimmed)
-    if (!Array.isArray(arr)) return []
-    // 每个元素取首项作为翻译文本
-    return arr.map(item => {
-      if (Array.isArray(item) && item.length > 0) {
-        return String(item[0] ?? '')
-      }
-      return ''
-    })
+    if (Array.isArray(arr)) {
+      // 每个元素取首项作为翻译文本
+      return arr.map(item => {
+        if (Array.isArray(item) && item.length > 0) {
+          return String(item[0] ?? '')
+        }
+        return ''
+      })
+    }
   } catch {
-    return []
+    // 非标准 JSON，继续尝试正则解析
   }
+
+  // 兜底：非标准酷狗格式（字符串不带双引号）
+  // 特征：单行、以 [[ 开头、以 ]] 结尾（区别于多行 LRC 格式）
+  if (trimmed.includes('\n')) return []
+  if (!trimmed.startsWith('[[') || !trimmed.endsWith(']]')) return []
+
+  // 正则提取每个内层数组的内容
+  const result: string[] = []
+  const innerRegex = /\[([^\[\]]*)\]/g
+  let match: RegExpExecArray | null
+  while ((match = innerRegex.exec(trimmed)) !== null) {
+    result.push(match[1].trim())
+  }
+  return result
 }
 
 // 获取当前歌词索引
