@@ -225,10 +225,15 @@
         <div 
           v-for="(item) in singerMatchList"
           :key="item.id"
-          class="match-item flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+          class="match-item flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors relative overflow-hidden"
           :class="{ 'bg-purple-50 border border-purple-200': selectedMatchId === item.id }"
           @click="selectMatch(item)"
         >
+          <!-- 已下载角标 -->
+          <div
+            v-if="item.isDownload === 'Y'"
+            class="download-badge"
+          >已下载</div>
           <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
             <span class="text-lg">🎵</span>
           </div>
@@ -479,11 +484,11 @@ const confirmMode = ref<'add' | 'update'>('add')
 const sourceOptions = [
   { key: 'KuGouLite', label: '酷狗概念版' },
   { key: 'QQ', label: 'QQ音乐' },
-  { key: 'Netease', label: '网易云音乐' },
+  { key: 'NetEase', label: '网易云音乐' },
   { key: 'KuGou', label: '酷狗音乐' },
-  { key: 'Bodian', label: '波点音乐' },
-  { key: 'Kuwo', label: '酷我音乐' },
-  { key: 'Migu', label: '咪咕音乐' },
+  { key: 'BoDian', label: '波点音乐' },
+  { key: 'KuWo', label: '酷我音乐' },
+  { key: 'MiGu', label: '咪咕音乐' },
   { key: 'other', label: '其他（手动输入）' }
 ]
 
@@ -976,5 +981,22 @@ const blobToFile = (blob: Blob, filename: string): File => {
 
 .raw-filename {
   word-break: break-all;
+}
+
+/* 已下载角标 */
+.download-badge {
+  position: absolute;
+  top: 6px;
+  left: -28px;
+  transform: rotate(-45deg);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
 }
 </style>

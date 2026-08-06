@@ -170,7 +170,7 @@ export interface UploadMusicRequest {
  */
 export async function uploadMusic(data: UploadMusicRequest, file: File): Promise<MusicInfoResp> {
   try {
-    const response = await request.upload<MusicInfoResp>('/music/upload-audio', data, file)
+    const response = await request.upload<MusicInfoResp>('/music/add', data, file)
 
     if (response.code === 200 && response.data) {
       return response.data
