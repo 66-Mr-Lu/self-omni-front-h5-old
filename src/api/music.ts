@@ -234,6 +234,15 @@ export interface AddMusicByShareLinkRequest {
   shareUrl: string  // 分享链接
   title: string     // 歌曲名称
   artist: string    // 歌手名称
+  album?: string
+  duration?: number
+  desc?: string
+  codec?: string
+  bitrate?: number
+  sampleRate?: number
+  bitDepth?: number
+  mime?: string
+  source?: string
 }
 
 /**
@@ -241,9 +250,14 @@ export interface AddMusicByShareLinkRequest {
  * @param data 分享链接、歌曲名称、歌手名称
  * @returns 新增的音乐信息
  */
-export async function addMusicByShareLink(data: AddMusicByShareLinkRequest): Promise<MusicInfoResp> {
+export async function addMusicByShareLink(data: AddMusicByShareLinkRequest, file?: File): Promise<MusicInfoResp> {
   try {
-    const response = await request.post<MusicInfoResp>('/music/add-by-share-link', data)
+    let response
+    if (file) {
+      response = await request.upload<MusicInfoResp>('/music/add', data, file)
+    } else {
+      response = await request.post<MusicInfoResp>('/music/add', data)
+    }
 
     if (response.code === 200 && response.data) {
       return response.data

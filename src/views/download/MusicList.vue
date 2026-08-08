@@ -138,7 +138,7 @@
     >
       <div class="add-music-popup p-5 pb-8 w-full">
         <!-- 弹窗头部 -->
-        <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center justify-between mb-4">
           <h3 class="text-base font-semibold text-gray-800">新增歌曲</h3>
           <div class="close-btn w-6 h-6 flex items-center justify-center cursor-pointer" @click="closeAddMusicPopup">
             <span class="text-gray-400 text-lg">✕</span>
@@ -181,10 +181,94 @@
               class="w-full p-3 bg-gray-50 rounded-lg text-sm text-gray-800 outline-none focus:bg-gray-100 transition-colors"
             />
           </div>
+
+          <!-- 文件上传区域 -->
+          <div class="form-item">
+            <label class="text-sm text-gray-600 mb-2 block">上传文件</label>
+            <!-- 未选择文件时的选择区域 -->
+            <div
+              v-if="uploadStep === 'select'"
+              class="upload-area border-2 border-dashed border-purple-300 rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer bg-purple-50/30 active:opacity-80 transition-opacity"
+              @click="triggerFileInput"
+            >
+              <span class="text-3xl mb-1">📁</span>
+              <p class="text-gray-700 text-sm font-medium">点击选择音乐文件</p>
+              <p class="text-gray-400 text-xs mt-1 text-center">支持 ncm、qmc、kgm、kwm、xm、mp3、flac、wav、m4a 等格式</p>
+            </div>
+            <input
+              ref="uploadFileInputRef"
+              type="file"
+              class="hidden"
+              accept=".ncm,.qmc0,.qmc3,.qmc2,.qmc4,.qmc6,.qmc8,.qmcflac,.qmcogg,.tkm,.mggl,.mflac,.mflac0,.mgg,.mgg1,.mgg0,.mmp4,.cache,.tm0,.tm3,.tm2,.tm6,.vpr,.kgm,.kgma,.kwm,.mg3d,.xm,.x2m,.x3m,.wav,.mp3,.flac,.m4a,.ogg"
+              @change="handleFileSelected"
+            />
+
+            <!-- 解密中 -->
+            <div v-if="uploadStep === 'decrypting'" class="py-4 flex flex-col items-center">
+              <div class="w-7 h-7 border-2 border-gray-200 border-t-purple-500 rounded-full animate-spin"></div>
+              <p class="text-gray-600 text-sm mt-2">正在解密文件...</p>
+              <p class="text-gray-400 text-xs mt-0.5">{{ uploadFileName }}</p>
+            </div>
+
+            <!-- 解密完成：展示文件名 + 元数据 + 重新选择 -->
+            <div v-if="uploadStep === 'confirm'" class="space-y-2">
+              <div class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg">
+                <span class="text-gray-500 text-xs truncate flex-1">{{ uploadFileName }}</span>
+                <button
+                  class="text-purple-500 text-xs ml-2 flex-shrink-0"
+                  @click="resetUploadStep"
+                >重新选择</button>
+              </div>
+
+              <!-- 解密后展示的元数据（只读） -->
+              <div class="metadata-section bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-100">
+                <div class="section-title text-purple-600 text-xs font-medium mb-2 flex items-center gap-1">
+                  <span>🔍</span>
+                  <span>音频元数据（解密后解析）</span>
+                </div>
+                <div class="meta-grid grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <div class="meta-item flex justify-between">
+                    <span class="text-gray-400">比特率</span>
+                    <span class="text-gray-700 font-medium">
+                      {{ displayMeta.bitrate != null ? `${displayMeta.bitrate} kbps` : '-' }}
+                    </span>
+                  </div>
+                  <div class="meta-item flex justify-between">
+                    <span class="text-gray-400">采样率</span>
+                    <span class="text-gray-700 font-medium">
+                      {{ displayMeta.sampleRate != null ? `${displayMeta.sampleRate} Hz` : '-' }}
+                    </span>
+                  </div>
+                  <div class="meta-item flex justify-between">
+                    <span class="text-gray-400">位深度</span>
+                    <span class="text-gray-700 font-medium">
+                      {{ displayMeta.bitDepth != null ? `${displayMeta.bitDepth} 位` : '-' }}
+                    </span>
+                  </div>
+                  <div class="meta-item flex justify-between">
+                    <span class="text-gray-400">编码格式</span>
+                    <span class="text-gray-700 font-medium">{{ displayMeta.codec || '-' }}</span>
+                  </div>
+                  <div class="meta-item flex justify-between">
+                    <span class="text-gray-400">时长</span>
+                    <span class="text-gray-700 font-medium">
+                      {{ displayMeta.duration != null ? formatMetaDuration(displayMeta.duration) : '-' }}
+                    </span>
+                  </div>
+                  <div class="meta-item flex justify-between">
+                    <span class="text-gray-400">MIME</span>
+                    <span class="text-gray-700 font-medium truncate max-w-[120px]" :title="displayMeta.mime">
+                      {{ displayMeta.mime || '-' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- 操作按钮 -->
-        <div class="flex gap-3 mt-6">
+        <div class="flex gap-3 mt-5">
           <button
             class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium transition-all active:opacity-80"
             @click="closeAddMusicPopup"
@@ -194,7 +278,7 @@
           <button
             class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-lg text-sm font-medium transition-all active:opacity-80 disabled:opacity-50"
             :disabled="addMusicSubmitting"
-            @click="handleAddMusic"
+            @click="handleSubmit"
           >
             {{ addMusicSubmitting ? '添加中...' : '添加' }}
           </button>
@@ -208,8 +292,19 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, ActionSheet, Popup } from 'vant'
-import { getMusicList, addMusicByShareLink, type MusicInfoResp } from '@/api/music'
+import { parseBlob as metaParseBlob } from 'music-metadata-browser'
+import { 
+  getMusicList, 
+  addMusicByShareLink, 
+  uploadMusic,
+  normalizeBitrate,
+  normalizeDuration,
+  type MusicInfoResp,
+  type UploadMusicRequest
+} from '@/api/music'
 import { useMusicStore } from '@/stores/music'
+import { Decrypt } from '@/decrypt/index'
+import type { DecryptResult, FileInfo } from '@/decrypt/entity'
 
 // 注册 Vant 组件
 const [vanActionSheet, vanPopup] = [ActionSheet, Popup]
@@ -255,6 +350,25 @@ const addMusicForm = ref({
   shareText: '',  // 分享文本（可能包含链接、歌名、歌手等信息）
   title: '',      // 歌曲名称
   artist: ''      // 歌手
+})
+
+// ==================== 文件上传相关 ====================
+const uploadFileInputRef = ref<HTMLInputElement | null>(null)
+// 上传步骤：select=选择文件, decrypting=解密中, confirm=解密完成
+type UploadStep = 'select' | 'decrypting' | 'confirm'
+const uploadStep = ref<UploadStep>('select')
+// 待处理的文件名称（展示用）
+const uploadFileName = ref('')
+// 解密后的结果
+let decryptResult: DecryptResult | null = null
+// 展示用的元数据（解密后解析，已标准化单位）
+const displayMeta = ref({
+  bitrate: null as number | null,   // kbps
+  sampleRate: null as number | null, // Hz
+  bitDepth: null as number | null,   // 位
+  codec: '' as string,               // 编码格式
+  duration: null as number | null,   // 秒
+  mime: '' as string                 // MIME
 })
 
 // 返回上一页
@@ -328,19 +442,234 @@ const onMoreActionSelect = (action: { name: string }) => {
 
 // 打开新增歌曲弹窗
 const openAddMusicPopup = () => {
-  // 重置表单
-  addMusicForm.value = {
-    shareText: '',
-    title: '',
-    artist: ''
-  }
+  addMusicForm.value = { shareText: '', title: '', artist: '' }
   parsedPlatform.value = ''
+  resetUploadState()
   showAddMusicPopup.value = true
 }
 
 // 关闭新增歌曲弹窗
 const closeAddMusicPopup = () => {
   showAddMusicPopup.value = false
+  // 延迟重置，避免关闭动画期间表单闪烁
+  setTimeout(() => {
+    addMusicForm.value = { shareText: '', title: '', artist: '' }
+    parsedPlatform.value = ''
+    resetUploadState()
+  }, 200)
+}
+
+// ==================== 文件上传：解密 + 元数据解析 ====================
+
+// 重置上传状态
+const resetUploadState = () => {
+  uploadStep.value = 'select'
+  uploadFileName.value = ''
+  decryptResult = null
+  displayMeta.value = {
+    bitrate: null,
+    sampleRate: null,
+    bitDepth: null,
+    codec: '',
+    duration: null,
+    mime: ''
+  }
+  if (uploadFileInputRef.value) {
+    uploadFileInputRef.value.value = ''
+  }
+}
+
+// 仅重置到文件选择步骤（保留弹窗打开）
+const resetUploadStep = () => {
+  uploadStep.value = 'select'
+  uploadFileName.value = ''
+  decryptResult = null
+  if (uploadFileInputRef.value) {
+    uploadFileInputRef.value.value = ''
+  }
+}
+
+// 触发文件选择
+const triggerFileInput = () => {
+  uploadFileInputRef.value?.click()
+}
+
+// 文件选择后的处理：解密 + 解析元数据
+const handleFileSelected = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  uploadFileName.value = file.name
+  uploadStep.value = 'decrypting'
+
+  try {
+    // 1. 解密文件
+    const fileInfo: FileInfo = {
+      status: 'pending',
+      name: file.name,
+      size: file.size,
+      percentage: 0,
+      uid: Date.now(),
+      raw: file
+    }
+    const result = await Decrypt(fileInfo, {})
+    result.originalFilename = file.name
+    decryptResult = result
+
+    // 2. 填充元数据（优先用解密库返回的）
+    let bitrate = result.bitrate
+    let sampleRate = result.sampleRate
+    let bitDepth = result.bitDepth
+    let codec = result.codec || ''
+    let duration = result.duration
+    const mime = result.mime || ''
+
+    // 3. 关键字段缺失时，用 music-metadata-browser 从解密后的 blob 补充解析
+    const needSupplement = (!duration || !bitrate || !sampleRate) && result.blob
+    if (needSupplement) {
+      try {
+        const musicMeta = await metaParseBlob(result.blob)
+        if (!duration && musicMeta.format.duration) {
+          duration = musicMeta.format.duration
+        }
+        if (!bitrate && musicMeta.format.bitrate) {
+          bitrate = musicMeta.format.bitrate
+        }
+        if (!sampleRate && musicMeta.format.sampleRate) {
+          sampleRate = musicMeta.format.sampleRate
+        }
+        if (!bitDepth && musicMeta.format.bitsPerSample) {
+          bitDepth = musicMeta.format.bitsPerSample
+        }
+        if (!codec && musicMeta.format.codec) {
+          codec = musicMeta.format.codec
+        }
+      } catch (e) {
+        console.warn('补充解析音频元数据失败，使用现有数据:', e)
+      }
+    }
+
+    // 4. 标准化单位并赋值给展示对象
+    displayMeta.value = {
+      bitrate: bitrate ? normalizeBitrate(bitrate) : null,
+      sampleRate: sampleRate ?? null,
+      bitDepth: bitDepth ?? null,
+      codec: codec || '',
+      duration: duration ? normalizeDuration(duration) : null,
+      mime: mime || ''
+    }
+
+    // 5. 自动填充歌名/歌手（如果解密结果有且表单为空）
+    if (result.title && !addMusicForm.value.title) {
+      addMusicForm.value.title = result.title
+    }
+    if (result.artist && !addMusicForm.value.artist) {
+      addMusicForm.value.artist = result.artist
+    }
+
+    // 6. 进入确认步骤
+    uploadStep.value = 'confirm'
+  } catch (error) {
+    console.error('解密失败:', error)
+    showToast({
+      message: `${file.name} 解密失败: ${error instanceof Error ? error.message : String(error)}`,
+      position: 'top'
+    })
+    uploadStep.value = 'select'
+    uploadFileName.value = ''
+  } finally {
+    if (uploadFileInputRef.value) {
+      uploadFileInputRef.value.value = ''
+    }
+  }
+}
+
+// 格式化元数据中的时长（秒 → 分:秒）
+const formatMetaDuration = (duration: number): string => {
+  const minutes = Math.floor(duration / 60)
+  const seconds = Math.floor(duration % 60)
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+// Blob 转 File
+const uploadBlobToFile = (blob: Blob, filename: string): File => {
+  const file = blob as unknown as File
+  if (file.name) return file
+  return new File([blob], filename, { type: blob.type || 'audio/mpeg' })
+}
+
+// 统一提交：有文件走上传接口，无文件走分享链接接口
+const handleSubmit = async () => {
+  const { shareText, title, artist } = addMusicForm.value
+  // 无文件 → 走分享链接
+  if (!shareText.trim()) {
+    showToast({ message: '请输入分享链接或上传文件', position: 'top' })
+    return
+  } else {
+    if (!title.trim()) {
+      showToast({ message: '请输入歌曲名称', position: 'top' })
+      return
+    }
+    if (!artist.trim()) {
+      showToast({ message: '请输入歌手名称', position: 'top' })
+      return
+    }
+  }
+
+    try {
+      addMusicSubmitting.value = true
+
+
+
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : '上传失败',
+        position: 'top'
+      })
+    } finally {
+      addMusicSubmitting.value = false
+    }
+
+
+
+  const shareUrl = extractUrl(shareText) || shareText.trim()
+
+  try {
+    addMusicSubmitting.value = true
+
+    let file;
+    if (decryptResult !== null) {
+       file = uploadBlobToFile(
+          decryptResult.blob,
+          `${title.trim()}.${decryptResult.ext}`
+      )
+    }
+
+    await addMusicByShareLink({
+      shareUrl,
+      title: title.trim(),
+      artist: artist.trim(),
+      duration: displayMeta.value.duration ?? 0,
+      bitrate: displayMeta.value.bitrate ?? undefined,
+      sampleRate: displayMeta.value.sampleRate ?? undefined,
+      bitDepth: displayMeta.value.bitDepth ?? undefined,
+      codec: displayMeta.value.codec || undefined,
+      mime: displayMeta.value.mime || undefined
+    }, file)
+
+    showToast({ message: '添加成功', position: 'top' })
+    closeAddMusicPopup()
+    currentPage.value = 1
+    fetchMusicList()
+  } catch (error) {
+    showToast({
+      message: error instanceof Error ? error.message : '添加失败',
+      position: 'top'
+    })
+  } finally {
+    addMusicSubmitting.value = false
+  }
 }
 
 /**
@@ -477,52 +806,6 @@ const parseShareText = () => {
   }
 }
 
-// 提交新增歌曲
-const handleAddMusic = async () => {
-  const { shareText, title, artist } = addMusicForm.value
-
-  // 参数校验
-  if (!shareText.trim()) {
-    showToast({ message: '请输入分享链接', position: 'top' })
-    return
-  }
-  if (!title.trim()) {
-    showToast({ message: '请输入歌曲名称', position: 'top' })
-    return
-  }
-  if (!artist.trim()) {
-    showToast({ message: '请输入歌手名称', position: 'top' })
-    return
-  }
-
-  // 从分享文本中提取URL（优先使用提取的URL，否则使用原始文本）
-  const shareUrl = extractUrl(shareText) || shareText.trim()
-
-  try {
-    addMusicSubmitting.value = true
-    
-    await addMusicByShareLink({
-      shareUrl,
-      title: title.trim(),
-      artist: artist.trim()
-    })
-
-    showToast({ message: '添加成功', position: 'top' })
-    closeAddMusicPopup()
-    
-    // 刷新音乐列表
-    currentPage.value = 1
-    fetchMusicList()
-  } catch (error) {
-    showToast({
-      message: error instanceof Error ? error.message : '添加失败',
-      position: 'top'
-    })
-  } finally {
-    addMusicSubmitting.value = false
-  }
-}
-
 // 获取音乐列表
 const fetchMusicList = async (append: boolean = false) => {
   if (loading.value || (append && loadingMore.value)) {
@@ -609,5 +892,27 @@ onUnmounted(() => {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+/* ================== 文件上传相关样式 ================== */
+.tab-btn {
+  border: none;
+  cursor: pointer;
+}
+
+.upload-area:active {
+  opacity: 0.8;
+}
+
+.metadata-section .meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 12px;
+}
+
+.metadata-section .meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>
