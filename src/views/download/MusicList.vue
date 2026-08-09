@@ -295,12 +295,10 @@ import { showToast, ActionSheet, Popup } from 'vant'
 import { parseBlob as metaParseBlob } from 'music-metadata-browser'
 import { 
   getMusicList, 
-  addMusicByShareLink, 
-  uploadMusic,
+  addMusicByShareLink,
   normalizeBitrate,
   normalizeDuration,
   type MusicInfoResp,
-  type UploadMusicRequest
 } from '@/api/music'
 import { useMusicStore } from '@/stores/music'
 import { Decrypt } from '@/decrypt/index'

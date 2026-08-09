@@ -62,15 +62,25 @@ export const menuData: TopCategory[] = [
         desc: '远程关闭计算机',
         tags: ['关机', 'shutdown', '电源', '远程']
       },
-      { 
-        id: 'remote-power', 
+      {
+        id: 'remote-power',
         name: '远程唤醒',
-        icon: '🟢', 
-        action: 'remotePower', 
-        priority: 20, 
+        icon: '🟢',
+        action: 'remotePower',
+        priority: 20,
         routePath: '/ops/remote-power',
         desc: '通过网络远程启动计算机',
         tags: ['开机', 'WOL', '网络唤醒', '远程']
+      },
+      {
+        id: 'job-manage',
+        name: '定时任务管理',
+        icon: '⏰',
+        action: 'jobManage',
+        priority: 25,
+        routePath: '/ops/job-manage',
+        desc: '管理XXL-JOB定时任务，支持执行、启停',
+        tags: ['定时任务', 'XXL-JOB', '调度', 'Cron', '任务']
       }
     ],
     // 二级菜单组

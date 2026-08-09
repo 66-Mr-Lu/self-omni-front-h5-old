@@ -59,6 +59,11 @@ const handleChildClick = (item: LeafMenu) => {
     router.push(item.routePath)
     return
   }
+  // 定时任务管理跳转到对应的页面
+  if (item.action === 'jobManage' && item.routePath) {
+    router.push(item.routePath)
+    return
+  }
   if (item.action === 'shutdown') {
     // 关机功能
     showDialog({
