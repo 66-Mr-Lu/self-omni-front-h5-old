@@ -136,9 +136,9 @@
       :close-on-click-overlay="false"
       :lock-scroll="true"
     >
-      <div class="add-music-popup p-5 pb-8 w-full flex flex-col" style="height: 85vh; max-height: 600px;">
+      <div class="add-music-popup p-5 pb-4 w-full flex flex-col" style="height: 85vh; max-height: 600px;">
         <!-- 弹窗头部 -->
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-2">
           <h3 class="text-base font-semibold text-gray-800">新增歌曲</h3>
           <div class="close-btn w-6 h-6 flex items-center justify-center cursor-pointer" @click="closeAddMusicPopup">
             <span class="text-gray-400 text-lg">✕</span>
@@ -153,7 +153,7 @@
             <textarea
               v-model="addMusicForm.shareText"
               placeholder="粘贴音乐分享文本或链接，支持QQ音乐、酷狗、网易云等"
-              rows="3"
+              rows="2"
               class="w-full p-3 bg-gray-50 rounded-lg text-sm text-gray-800 outline-none focus:bg-gray-100 transition-colors resize-none"
               @input="parseShareText"
             ></textarea>
@@ -162,7 +162,7 @@
 
           <!-- 歌曲名称输入 -->
           <div class="form-item">
-            <label class="text-sm text-gray-600 mb-2 block">歌曲名称</label>
+            <label class="text-sm text-gray-600 mb-0 block">歌曲名称</label>
             <input
               v-model="addMusicForm.title"
               type="text"
@@ -170,10 +170,9 @@
               class="w-full p-3 bg-gray-50 rounded-lg text-sm text-gray-800 outline-none focus:bg-gray-100 transition-colors"
             />
           </div>
-
           <!-- 歌手输入 -->
           <div class="form-item">
-            <label class="text-sm text-gray-600 mb-2 block">歌手</label>
+            <label class="text-sm text-gray-600 mb-0 block">歌手</label>
             <input
               v-model="addMusicForm.artist"
               type="text"
@@ -183,7 +182,7 @@
           </div>
           <!-- 专辑输入 -->
           <div class="form-item">
-            <label class="text-sm text-gray-600 mb-2 block">专辑</label>
+            <label class="text-sm text-gray-600 mb-0 block">专辑</label>
             <input
                 v-model="addMusicForm.album"
                 type="text"
@@ -194,7 +193,7 @@
 
           <!-- 文件上传区域 -->
           <div class="form-item">
-            <label class="text-sm text-gray-600 mb-2 block">上传文件</label>
+            <label class="text-sm text-gray-600 mb-0 block">上传文件</label>
             <!-- 未选择文件时的选择区域 -->
             <div
               v-if="uploadStep === 'select'"
@@ -317,25 +316,25 @@
             </div>
           </div>
         </div>
-        </div>
+      </div>
 
-        <!-- 操作按钮 -->
-        <div class="flex gap-3 mt-4 flex-shrink-0">
-          <button
-            class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-medium transition-all active:opacity-80 disabled:opacity-50"
-            :disabled="!addMusicForm.artist.trim() || searchMusicLoading"
-            @click="handleSearchMusic"
-          >
-            {{ searchMusicLoading ? '检索中...' : '检索' }}
-          </button>
-          <button
-            class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-lg text-sm font-medium transition-all active:opacity-80 disabled:opacity-50"
-            :disabled="addMusicSubmitting"
-            @click="handleSubmit"
-          >
-            {{ addMusicSubmitting ? (selectedMusic ? '更新中...' : '添加中...') : (selectedMusic ? '更新音源' : '添加') }}
-          </button>
-        </div>
+      <!-- 操作按钮 -->
+      <div class="flex gap-3 mt-2 flex-shrink-0">
+        <button
+          class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-medium transition-all active:opacity-80 disabled:opacity-50"
+          :disabled="!addMusicForm.artist.trim() || searchMusicLoading"
+          @click="handleSearchMusic"
+        >
+          {{ searchMusicLoading ? '检索中...' : '检索' }}
+        </button>
+        <button
+          class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-lg text-sm font-medium transition-all active:opacity-80 disabled:opacity-50"
+          :disabled="addMusicSubmitting"
+          @click="handleSubmit"
+        >
+          {{ addMusicSubmitting ? (selectedMusic ? '更新中...' : '添加中...') : (selectedMusic ? '更新音源' : '添加') }}
+        </button>
+      </div>
 
     </van-popup>
   </div>
