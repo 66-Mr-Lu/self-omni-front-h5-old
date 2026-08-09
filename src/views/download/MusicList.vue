@@ -288,21 +288,32 @@
                 :class="selectedMusic?.id === music.id ? 'border-purple-500 bg-purple-50' : 'border-gray-200'"
                 @click="selectMusic(music)"
             >
-              <!-- 已下载角标 -->
-              <div
-                  v-if="music.isDownload === 'Y'"
-                  class="download-badge"
-              >已下载</div>
-              <div class="flex justify-between items-start">
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-sm text-gray-800 truncate">{{ music.title }}</div>
-                  <div class="text-xs text-gray-500 mt-0.5">{{ music.artist }} - {{ music.album }}</div>
+              <div class="flex items-start gap-3">
+                <!-- 专辑封面占位 -->
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                  <span class="text-lg">🎵</span>
                 </div>
-                <div class="flex items-center gap-2 ml-2 flex-shrink-0">
-                  <div class="text-xs text-gray-400">{{ music.duration ? formatDuration(music.duration) : music.duration }}</div>
-                  <div class="text-xs text-gray-400">{{ music.bitrate }} kbps</div>
+
+                <div class="flex-1 min-w-0">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-sm text-gray-800 truncate">{{ music.title }}</div>
+                      <div class="text-xs text-gray-500 mt-0.5">{{ music.artist }} - {{ music.album }}</div>
+                    </div>
+                    <div class="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <div class="text-xs text-gray-400">{{ music.duration ? formatDuration(music.duration) : music.duration }}</div>
+                      <div class="text-xs text-gray-400">{{ music.bitrate }} kbps</div>
+                    </div>
+                  </div>
+
+                  <!-- 已下载角标 -->
+                  <div
+                      v-if="music.isDownload === 'Y'"
+                      class="download-badge mt-1"
+                  >已下载</div>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
