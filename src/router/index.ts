@@ -22,6 +22,7 @@ const DeviceListPage = () => import('@/views/ops/device/DeviceList.vue')
 const DeviceEditorPage = () => import('@/views/ops/device/DeviceEditor.vue')
 // 定时任务管理页面（懒加载）
 const JobListPage = () => import('@/views/ops/job/JobList.vue')
+const JobTimelinePage = () => import('@/views/ops/job/JobTimeline.vue')
 const BilibiliResourcePage = () => import('@/views/download/bilibili.vue')
 const VideoListPage = () => import('@/views/download/VideoList.vue')
 const VideoPlayerPage = () => import('@/views/download/VideoPlayer.vue')
@@ -181,6 +182,13 @@ const routes: RouteRecordRaw[] = [
         path: 'ops/job-manage',
         name: 'JobList',
         component: JobListPage,
+        meta: { categoryId: 'ops', requiresAuth: false }
+      },
+      // 定时任务调度时序图路由
+      {
+        path: 'ops/job-timeline',
+        name: 'JobTimeline',
+        component: JobTimelinePage,
         meta: { categoryId: 'ops', requiresAuth: false }
       },
       {

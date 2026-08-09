@@ -112,8 +112,8 @@
     <!-- 搜索菜单弹窗 -->
     <SearchMenu v-model:show="showSearch" />
 
-    <!-- 迷你播放器（非播放页面时显示） -->
-    <MiniPlayer v-if="!isMusicPlayerPage" />
+    <!-- 迷你播放器（非播放页面及时序图页面时显示） -->
+    <MiniPlayer v-if="!isMusicPlayerPage && !isJobTimelinePage" />
   </div>
 </template>
 
@@ -177,9 +177,14 @@ const isMusicPlayerPage = computed(() => {
   return route.path.startsWith('/resource/music-player/')
 })
 
+// 是否为定时任务时序图页面（全屏展示图表）
+const isJobTimelinePage = computed(() => {
+  return route.path.startsWith('/ops/job-timeline')
+})
+
 // 是否为全屏页面（隐藏顶部导航栏和内容内边距）
 const isFullscreenPage = computed(() => {
-  return isNoteEditorPage.value || isMusicPlayerPage.value
+  return isNoteEditorPage.value || isMusicPlayerPage.value || isJobTimelinePage.value
 })
 
 // 当前页面标题

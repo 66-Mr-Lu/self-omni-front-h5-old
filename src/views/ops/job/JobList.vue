@@ -29,6 +29,9 @@
         <h1 class="text-white text-base font-semibold mx-2">定时任务管理</h1>
         <div class="ml-auto flex items-center gap-2">
           <span class="text-white/70 text-xs">{{ total }} 个任务</span>
+          <div class="timeline-btn w-7 h-7 flex items-center justify-center cursor-pointer" title="调度时序图" @click="goTimeline">
+            <span class="text-white text-base">📊</span>
+          </div>
           <div class="search-btn w-7 h-7 flex items-center justify-center cursor-pointer" @click="openSearch">
             <span class="text-white text-base">🔍</span>
           </div>
@@ -235,6 +238,13 @@ const loadJobs = async () => {
  */
 const goBack = () => {
   router.back()
+}
+
+/**
+ * 跳转到调度时序图页面
+ */
+const goTimeline = () => {
+  router.push('/ops/job-timeline')
 }
 
 /**
