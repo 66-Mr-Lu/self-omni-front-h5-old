@@ -127,11 +127,12 @@ export function getMusicResource(id: number, resourceType: string, params?: Reco
  * @param singer 歌手名称
  * @returns 音乐列表
  */
-export async function listMusicInfoBySinger(title: string, singer: string): Promise<MusicInfoResp[]> {
+export async function listMusicInfoBySinger(title: string, singer: string, shareUrl?: string): Promise<MusicInfoResp[]> {
   try {
     const response = await request.post<MusicInfoResp[]>('/music/listByMetainfo', {
       title,
-      artist: singer
+      artist: singer,
+      shareUrl
     })
 
     if (response.code === 200 && response.data) {
@@ -199,6 +200,7 @@ export interface UpdateMusicRequest {
   bitDepth?: number
   mime?: string
   source?: string
+  shareUrl?: string
 }
 
 /**
