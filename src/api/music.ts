@@ -122,14 +122,20 @@ export function getMusicResource(id: number, resourceType: string, params?: Reco
   return url
 }
 
+
+export interface ListMusicInfoBySingerResp {
+  results: MusicInfoResp[],
+  metaInfoFromShareLink?: MusicInfoResp
+}
+
 /**
  * 根据歌手名查询音乐列表
  * @param singer 歌手名称
  * @returns 音乐列表
  */
-export async function listMusicInfoBySinger(title: string, singer: string, shareUrl?: string): Promise<MusicInfoResp[]> {
+export async function listMusicInfoBySinger(title: string, singer: string, shareUrl?: string): Promise<ListMusicInfoBySingerResp> {
   try {
-    const response = await request.post<MusicInfoResp[]>('/music/listByMetainfo', {
+    const response = await request.post<ListMusicInfoBySingerResp>('/music/listByMetainfo', {
       title,
       artist: singer,
       shareUrl

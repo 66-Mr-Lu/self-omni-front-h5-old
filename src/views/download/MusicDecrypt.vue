@@ -684,7 +684,8 @@ const handleSearch = async () => {
   selectedMatchId.value = null
   
   try {
-    singerMatchList.value = await listMusicInfoBySinger(title, artist)
+    const respData = await listMusicInfoBySinger(title, artist)
+    singerMatchList.value = respData.results
   } catch (error) {
     console.error('搜索失败:', error)
     showToast({

@@ -322,7 +322,7 @@
       <div class="flex gap-3 mt-2 flex-shrink-0">
         <button
           class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-medium transition-all active:opacity-80 disabled:opacity-50"
-          :disabled="!addMusicForm.artist.trim() || searchMusicLoading"
+          :disabled="(!addMusicForm.artist.trim() && !addMusicForm.title.trim() && !addMusicForm.shareText.trim()) || searchMusicLoading"
           @click="handleSearchMusic"
         >
           {{ searchMusicLoading ? '检索中...' : '检索' }}
@@ -663,8 +663,8 @@ const uploadBlobToFile = (blob: Blob, filename: string): File => {
 // 检索音乐
 const handleSearchMusic = async () => {
   const { title, artist, shareText } = addMusicForm.value
-  if (!artist.trim()) {
-    showToast({ message: '请输入歌手名称', position: 'top' })
+  if (!artist.trim() && !shareText.trim() && !title.trim()) {
+    showToast({ message: '请输入歌名、歌手或分享链接', position: 'top' })
     return
   }
 
@@ -675,13 +675,22 @@ const handleSearchMusic = async () => {
 
     const shareUrl = extractUrl(shareText) || shareText.trim()
     // 调用API检索音乐
-    const results = await listMusicInfoBySinger(title || '', artist, shareUrl)
-    searchResults.value = results || []
+    const respData = await listMusicInfoBySinger(title || '', artist, shareUrl)
 
-    if (results.length === 0) {
+    const shareLinkData = respData.metaInfoFromShareLink;
+    if (shareLinkData) {
+      // 自动填充表单
+        addMusicForm.value.title = shareLinkData.title
+        addMusicForm.value.artist = shareLinkData.artist
+        addMusicForm.value.album = shareLinkData.album
+    }
+
+    searchResults.value = respData.results || []
+
+    if (respData.results.length === 0) {
       showToast({ message: '未找到相关音乐', position: 'top' })
     } else {
-      showToast({ message: `共找到${results.length}条相关的记录`, position: 'top' })
+      showToast({ message: `共找到${respData.results.length}条相关的记录`, position: 'top' })
     }
   } catch (error) {
     showToast({
@@ -746,7 +755,7 @@ const handleSubmit = async () => {
         shareUrl: extractUrl(shareText) || shareText.trim(),
         title: title.trim(),
         artist: artist.trim(),
-        album: album.trim(),
+        album: album?.trim(),
         duration: displayMeta.value.duration ?? 0,
         bitrate: displayMeta.value.bitrate ?? undefined,
         sampleRate: displayMeta.value.sampleRate ?? undefined,
@@ -810,58 +819,59 @@ const handleSubmit = async () => {
     } finally {
       addMusicSubmitting.value = false
     }
+    return
   }
 
   // 无文件 → 走分享链接
-  if (!shareText.trim()) {
-    showToast({ message: '请输入分享链接或上传文件', position: 'top' })
-    return
-  } else {
-    if (!title.trim()) {
-      showToast({ message: '请输入歌曲名称', position: 'top' })
-      return
-    }
-    if (!artist.trim()) {
-      showToast({ message: '请输入歌手名称', position: 'top' })
-      return
-    }
-  }
-
-  try {
-    addMusicSubmitting.value = true
-
-    let file;
-    if (decryptResult !== null) {
-       file = uploadBlobToFile(
-          decryptResult.blob,
-          `${title.trim()}.${decryptResult.ext}`
-      )
-    }
-
-    await addMusicByShareLink({
-      shareUrl: extractUrl(shareText) || shareText.trim(),
-      title: title.trim(),
-      artist: artist.trim(),
-      duration: displayMeta.value.duration ?? 0,
-      bitrate: displayMeta.value.bitrate ?? undefined,
-      sampleRate: displayMeta.value.sampleRate ?? undefined,
-      bitDepth: displayMeta.value.bitDepth ?? undefined,
-      codec: displayMeta.value.codec || undefined,
-      mime: displayMeta.value.mime || undefined
-    }, file)
-
-    showToast({ message: '添加成功', position: 'top' })
-    closeAddMusicPopup()
-    currentPage.value = 1
-    fetchMusicList()
-  } catch (error) {
-    showToast({
-      message: error instanceof Error ? error.message : '添加失败',
-      position: 'top'
-    })
-  } finally {
-    addMusicSubmitting.value = false
-  }
+  // if (!shareText.trim()) {
+  //   showToast({ message: '请输入分享链接或上传文件', position: 'top' })
+  //   return
+  // } else {
+  //   if (!title.trim()) {
+  //     showToast({ message: '请输入歌曲名称', position: 'top' })
+  //     return
+  //   }
+  //   if (!artist.trim()) {
+  //     showToast({ message: '请输入歌手名称', position: 'top' })
+  //     return
+  //   }
+  // }
+  //
+  // try {
+  //   addMusicSubmitting.value = true
+  //
+  //   let file;
+  //   if (decryptResult !== null) {
+  //      file = uploadBlobToFile(
+  //         decryptResult.blob,
+  //         `${title.trim()}.${decryptResult.ext}`
+  //     )
+  //   }
+  //
+  //   await addMusicByShareLink({
+  //     shareUrl: extractUrl(shareText) || shareText.trim(),
+  //     title: title.trim(),
+  //     artist: artist.trim(),
+  //     duration: displayMeta.value.duration ?? 0,
+  //     bitrate: displayMeta.value.bitrate ?? undefined,
+  //     sampleRate: displayMeta.value.sampleRate ?? undefined,
+  //     bitDepth: displayMeta.value.bitDepth ?? undefined,
+  //     codec: displayMeta.value.codec || undefined,
+  //     mime: displayMeta.value.mime || undefined
+  //   }, file)
+  //
+  //   showToast({ message: '添加成功', position: 'top' })
+  //   closeAddMusicPopup()
+  //   currentPage.value = 1
+  //   fetchMusicList()
+  // } catch (error) {
+  //   showToast({
+  //     message: error instanceof Error ? error.message : '添加失败',
+  //     position: 'top'
+  //   })
+  // } finally {
+  //   addMusicSubmitting.value = false
+  // }
 }
 
 /**

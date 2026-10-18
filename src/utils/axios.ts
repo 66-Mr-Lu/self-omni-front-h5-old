@@ -151,9 +151,11 @@ const request = {
       }
     }
     formData.append('file', file)
+    const timeout = config?.timeout ?? 70000
     
     return instance.post(url, formData, {
       ...config,
+      timeout,
       headers: {
         ...config?.headers,
         'Content-Type': 'multipart/form-data'
